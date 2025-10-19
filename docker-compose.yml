@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  pseudorandom-api:
+    container_name: pseudorandom-api
+    image: pseudorandom-api:latest
+    ports:
+      - "8081:8080"
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod

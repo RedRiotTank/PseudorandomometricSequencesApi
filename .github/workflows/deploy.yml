@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "target/*.jar, Dockerfile, docker-compose.yml"
+          source: "target/*.war, Dockerfile, docker-compose.yml"
           target: "/opt/pseudorandomometricsequencesapi/"
 
       - name: Deploy and restart Docker container
@@ -48,6 +48,6 @@ jobs:
            
             docker build -t pseudorandom-api:latest .
          
-            docker compose up -d
+            docker-compose up -d
             
             echo "Deployment successful! API is running on port 8081 (default port)"
