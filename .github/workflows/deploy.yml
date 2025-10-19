@@ -1,0 +1,53 @@
+name: Deploy Spring Boot API to Docker Server (Maven)
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+
+        run: mvn clean package -DskipTests
+
+      - name: Deploy project files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "target/*.jar, Dockerfile, docker-compose.yml"
+          target: "/opt/pseudorandomometricsequencesapi/"
+
+      - name: Deploy and restart Docker container
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |        
+            cd /opt/pseudorandomometricsequencesapi/
+                      
+            docker stop pseudorandom-api || true
+            docker rm pseudorandom-api || true
+           
+            docker build -t pseudorandom-api:latest .
+         
+            docker compose up -d
+            
+            echo "Deployment successful! API is running on port 8081 (default port)"
