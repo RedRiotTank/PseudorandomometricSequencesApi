@@ -9,3 +9,13 @@ services:
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - monitoring_net
+    labels:
+      logging_jobname: "apis"
+      logging: "promtail"
+
+networks:
+  monitoring_net:
+    external:
+      name: monitoring
