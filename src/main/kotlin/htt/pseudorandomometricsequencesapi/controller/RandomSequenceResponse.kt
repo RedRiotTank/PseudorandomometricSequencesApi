@@ -1,4 +1,4 @@
-package htt.pseudorandomometricsequencesapi
+package htt.pseudorandomometricsequencesapi.controller
 
 data class RandomSequenceResponse(
     val type: String,

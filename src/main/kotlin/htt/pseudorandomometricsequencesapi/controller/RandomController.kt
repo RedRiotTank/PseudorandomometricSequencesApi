@@ -1,6 +1,6 @@
-package htt.pseudorandomometricsequencesapi
+package htt.pseudorandomometricsequencesapi.controller
 
-
+import htt.pseudorandomometricsequencesapi.domain.RandomService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -14,10 +14,18 @@ class RandomController(private val randomService: RandomService) {
     fun getRandomSequence(
         @RequestParam(defaultValue = "10") count: Int,
         @RequestParam(defaultValue = "general") type: String,
-        @RequestParam(defaultValue = "uniform") distribution: String
-    ): RandomSequenceResponse {
+        @RequestParam(defaultValue = "uniform") distribution: String,
+        @RequestParam(required = false) param1: Double?,
+        @RequestParam(required = false) param2: Double?
 
-        val sequence = randomService.generateSequence(count, type, distribution)
+    ): RandomSequenceResponse {
+        val sequence = randomService.generateSequence(
+            count,
+            type,
+            distribution,
+            param1,
+            param2
+        )
 
         return RandomSequenceResponse(
             type = type,
