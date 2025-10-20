@@ -10,9 +10,4 @@ class HomeController {
     fun redirectToSwagger(): String {
         return "redirect:/swagger-ui.html"
     }
-
-    @GetMapping("/")
-    fun redirectToKDoc(): String {
-        return "redirect:/doc/index.html"
-    }
 }
