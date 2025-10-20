@@ -6,12 +6,12 @@ import org.springframework.web.bind.annotation.GetMapping
 @Controller
 class HomeController {
 
-    @GetMapping("/")
+    @GetMapping("/swagger")
     fun redirectToSwagger(): String {
         return "redirect:/swagger-ui.html"
     }
 
-    @GetMapping("/doc")
+    @GetMapping("/")
     fun redirectToKDoc(): String {
         return "redirect:/doc/index.html"
     }
