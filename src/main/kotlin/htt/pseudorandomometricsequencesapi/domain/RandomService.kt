@@ -6,9 +6,14 @@ import org.springframework.stereotype.Service
 import org.apache.commons.math3.random.JDKRandomGenerator
 import java.security.SecureRandom
 import java.util.Random
+import org.slf4j.LoggerFactory
 
 @Service
 class RandomService {
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(RandomService::class.java)
+    }
 
     fun generateSequence(
         count: Int,
@@ -19,31 +24,55 @@ class RandomService {
     ): List<Double> {
         require(count > 0) { "Count must be positive." }
 
+        logger.debug("Count validation successful: {}", count)
+
         val distributionName = distribution.lowercase()
+        val typeName = type.lowercase()
 
         val javaRandom: Random = when (type.lowercase()) {
-            "secure" -> SecureRandom()
-            "general" -> Random()
-            else -> throw IllegalArgumentException("Invalid type. Use 'secure' or 'general'.")
+            "secure" -> {
+                logger.debug("Using generator type: SecureRandom")
+                SecureRandom()
+            }
+            "general" ->{
+                logger.debug("Using generator type: Random (general)")
+                Random()
+            }
+            else -> {
+                logger.error("Invalid generator type: {}", typeName)
+                throw IllegalArgumentException("Invalid type. Use 'secure' or 'general'.")
+            }
         }
 
+        val seedValue = javaRandom.nextLong()
         val commonsRandom = JDKRandomGenerator()
+
+        commonsRandom.setSeed(seedValue)
+
         commonsRandom.setSeed(javaRandom.nextLong())
+        logger.debug("Apache Commons Math generator seed: {}", seedValue)
 
-        val generator: SequenceGenerator = when (distributionName) {
+        val generator: SequenceGenerator = try {
+            when (distributionName) {
+                UniformGenerator.DISTRIBUTION_NAME -> UniformGenerator.create(param1, param2, javaRandom)
+                GaussianGenerator.DISTRIBUTION_NAME -> GaussianGenerator.create(param1, param2, javaRandom)
+                ExponentialGenerator.DISTRIBUTION_NAME -> ExponentialGenerator.create(param1, javaRandom)
+                GammaGenerator.DISTRIBUTION_NAME -> GammaGenerator.create(param1, param2, commonsRandom)
+                LogNormalGenerator.DISTRIBUTION_NAME -> LogNormalGenerator.create(param1, param2, commonsRandom)
+                BetaGenerator.DISTRIBUTION_NAME -> BetaGenerator.create(param1, param2, commonsRandom)
+                else -> throw IllegalArgumentException(
+                    "Invalid Distribution: $distributionName. Use one of the supported types."
+                )
+            }
+        } catch (e: IllegalArgumentException) {
 
-            UniformGenerator.DISTRIBUTION_NAME -> UniformGenerator.create(param1, param2, javaRandom)
-            GaussianGenerator.DISTRIBUTION_NAME -> GaussianGenerator.create(param1, param2, javaRandom)
-            ExponentialGenerator.DISTRIBUTION_NAME -> ExponentialGenerator.create(param1, javaRandom)
-
-            GammaGenerator.DISTRIBUTION_NAME -> GammaGenerator.create(param1, param2, commonsRandom)
-            LogNormalGenerator.DISTRIBUTION_NAME -> LogNormalGenerator.create(param1, param2, commonsRandom)
-            BetaGenerator.DISTRIBUTION_NAME -> BetaGenerator.create(param1, param2, commonsRandom)
-
-            else -> throw IllegalArgumentException(
-                "Invalid Distribution: $distributionName. Use one of the supported types."
-            )
+            logger.error("Error creating generator for '{}' with Params: [{}, {}]. Message: {}",
+                distributionName, param1, param2, e.message)
+            throw e
         }
+
+        logger.info("Built generator: {}. Samples to generate {}",
+            generator::class.simpleName, count)
 
         return (1..count).map {
             generator.sample()

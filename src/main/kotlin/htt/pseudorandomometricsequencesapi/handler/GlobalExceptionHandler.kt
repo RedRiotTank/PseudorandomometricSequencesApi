@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 
 /**
  * Global exception handler configured using [@ControllerAdvice][org.springframework.web.bind.annotation.ControllerAdvice].
@@ -16,6 +17,8 @@ import java.time.LocalDateTime
  */
 @ControllerAdvice
 class GlobalExceptionHandler {
+
+    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     /**
      * Handles exceptions caused by invalid user input or business logic violations,
@@ -34,6 +37,10 @@ class GlobalExceptionHandler {
         ex: IllegalArgumentException,
         request: WebRequest
     ): ResponseEntity<ErrorDetails> {
+
+        logger.warn("BAD REQUEST (400) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
         val errorDetails = ErrorDetails(
             timestamp = LocalDateTime.now(),
             message = ex.message ?: "Invalid request parameters provided.",
@@ -61,8 +68,9 @@ class GlobalExceptionHandler {
         ex: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorDetails> {
-        // Log the full error for server-side debugging
-        ex.printStackTrace()
+
+        logger.error("!!! INTERNAL SERVER ERROR (500) in {}. Unexpected error: {}",
+            request.getDescription(false), ex.message, ex)
 
         val errorDetails = ErrorDetails(
             timestamp = LocalDateTime.now(),
