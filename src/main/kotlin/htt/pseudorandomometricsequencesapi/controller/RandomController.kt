@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.slf4j.LoggerFactory
 
 @Tag(
     name = "Pseudorandom Sequence Generator",
@@ -19,10 +20,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/random")
 class RandomController(private val randomService: RandomService) {
-
-    // --- COMPILE-TIME CONSTANT FOR DESCRIPTION ---
     companion object {
-        // Using 'const val' and '\n' to ensure the string is a constant and the Markdown renders correctly.
+        private val logger = LoggerFactory.getLogger(RandomController::class.java)
+
         private const val DISTRIBUTION_DESCRIPTION =
             "The probability distribution to sample from.\n" +
                     "**Available Distributions:**\n" +
@@ -34,8 +34,6 @@ class RandomController(private val randomService: RandomService) {
                     "* `beta`: param1 = α, param2 = β" // α y β
 
     }
-    // ---------------------------------------------
-
 
     @Operation(
         summary = "Generate a Pseudorandom Number Sequence",
@@ -98,6 +96,10 @@ class RandomController(private val randomService: RandomService) {
         @RequestParam(required = false) param2: Double?
 
     ): RandomSequenceResponse {
+
+        logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}]",
+            count, type, distribution, param1, param2)
+
         val sequence = randomService.generateSequence(
             count,
             type,
@@ -105,6 +107,9 @@ class RandomController(private val randomService: RandomService) {
             param1,
             param2
         )
+
+        logger.info("<- Request completed successfully. Count generated: {}, Distribution: '{}'. First element: {}",
+            sequence.size, distribution, sequence.firstOrNull())
 
         return RandomSequenceResponse(
             type = type,
