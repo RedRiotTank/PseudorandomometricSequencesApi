@@ -31,7 +31,9 @@ class RandomController(private val randomService: RandomService) {
                     "* `exponential`: param1 = mean (or 1/λ)\n" + // λ
                     "* `gamma`: param1 = shape (k), param2 = scale (θ)\n" + // θ
                     "* `lognormal`: param1 = scale (μ), param2 = shape (σ)\n" + // μ y σ
-                    "* `beta`: param1 = α, param2 = β" // α y β
+                    "* `beta`: param1 = α, param2 = β" + // α y β
+                    "* `weibull`: param1 = shape (k), param2 = scale (λ)\n" + // k y λ
+                    "* `cauchy`: param1 = location (x₀), param2 = scale (γ)" // x₀ y γ
 
     }
 
@@ -76,7 +78,7 @@ class RandomController(private val randomService: RandomService) {
 
         @Parameter(
             description = DISTRIBUTION_DESCRIPTION,
-            schema = Schema(allowableValues = ["uniform","gaussian","exponential","gamma","lognormal","beta"]),
+            schema = Schema(allowableValues = ["uniform","gaussian","exponential","gamma","lognormal","beta", "weibull", "cauchy"]),
             example = "gaussian"
         )
         @RequestParam(defaultValue = "uniform") distribution: String,
