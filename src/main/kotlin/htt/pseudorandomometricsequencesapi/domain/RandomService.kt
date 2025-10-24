@@ -23,6 +23,7 @@ class RandomService {
         param2: Double? = null
     ): List<Double> {
         require(count > 0) { "Count must be positive." }
+        require(count <= 2000000) {"Count cannot be greater than 2,000,000"}
 
         logger.debug("Count validation successful: {}", count)
 
