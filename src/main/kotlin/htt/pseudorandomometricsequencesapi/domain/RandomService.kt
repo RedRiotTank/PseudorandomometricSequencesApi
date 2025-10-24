@@ -63,6 +63,8 @@ class RandomService {
                 BetaGenerator.DISTRIBUTION_NAME -> BetaGenerator.create(param1, param2, commonsRandom)
                 WeibullGenerator.DISTRIBUTION_NAME -> WeibullGenerator.create(param1, param2, commonsRandom)
                 CauchyGenerator.DISTRIBUTION_NAME -> CauchyGenerator.create(param1, param2, commonsRandom)
+                TStudentGenerator.DISTRIBUTION_NAME -> TStudentGenerator.create(param1, commonsRandom)
+                BinomialGenerator.DISTRIBUTION_NAME -> BinomialGenerator.create(param1, param2, commonsRandom)
                 else -> throw IllegalArgumentException(
                     "Invalid Distribution: $distributionName. Use one of the supported types."
                 )
