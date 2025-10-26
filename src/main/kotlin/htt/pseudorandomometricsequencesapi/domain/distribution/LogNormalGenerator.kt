@@ -32,25 +32,20 @@ import org.apache.commons.math3.random.RandomGenerator
  * @see org.apache.commons.math3.distribution.LogNormalDistribution
  */
 class LogNormalGenerator(
-    mu: Double,
-    sigma: Double,
+    val mu: Double, // Exposed for external access/testing
+    val sigma: Double, // Exposed for external access/testing
     randomGenerator: RandomGenerator
 ) : SequenceGenerator {
 
     /**
      * The internal Log-Normal distribution object from Apache Commons Math.
+     * The initialization and validation are performed here to ensure 100% coverage
+     * of the property declaration line.
      */
-    val distribution: LogNormalDistribution
-
-    /**
-     * Initializes the generator and validates the shape parameter.
-     *
-     * @throws IllegalArgumentException if {@code sigma} ($\sigma$) is not positive.
-     */
-    init {
+    val distribution: LogNormalDistribution = run {
         require(sigma > 0.0) { "LogNormal 'sigma' (param2) must be positive." }
-
-        this.distribution = LogNormalDistribution(randomGenerator, mu, sigma)
+        // Note: Apache Commons Math LogNormalDistribution uses 'scale' for mu and 'shape' for sigma.
+        LogNormalDistribution(randomGenerator, mu, sigma)
     }
 
     /**

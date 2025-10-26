@@ -26,25 +26,19 @@ import org.apache.commons.math3.random.RandomGenerator
  * @see org.apache.commons.math3.distribution.CauchyDistribution
  */
 class CauchyGenerator(
-    location: Double,
-    scale: Double,
+    val location: Double,
+    val scale: Double,
     randomGenerator: RandomGenerator
 ) : SequenceGenerator {
 
     /**
      * The internal Cauchy distribution object from Apache Commons Math.
+     * The initialization and validation are performed here to ensure 100% coverage
+     * of the property declaration line.
      */
-    val distribution: CauchyDistribution
-
-    /**
-     * Initializes the generator and validates the scale parameter.
-     *
-     * @throws IllegalArgumentException if {@code scale} ($\gamma$) is not positive.
-     */
-    init {
+    val distribution: CauchyDistribution = run {
         require(scale > 0.0) { "Cauchy 'scale' (param2) must be positive (gamma > 0)." }
-
-        this.distribution = CauchyDistribution(randomGenerator, location, scale)
+        CauchyDistribution(randomGenerator, location, scale)
     }
 
     /**
