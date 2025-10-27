@@ -1,6 +1,6 @@
 # Pseudorandomometric Sequences API
 
-A simple, self-hosted REST API for generating sequences of pseudo-random numbers from various statistical probability distributions.
+A simple, self-hosted REST API for generating sequences of pseudo-random numbers from various statistical probability distributions. Built with Kotlin, Spring Boot, and the [Apache Commons Math](https://commons.apache.org/proper/commons-math/) library.
 
 ## Documentation
 
@@ -15,7 +15,7 @@ This API provides a single endpoint to generate lists of floating-point numbers 
 
 ### Key Features
 
-* **Multiple Distributions:** Supports Uniform, Gaussian (Normal), Exponential, Gamma, Log-Normal, and Beta distributions.
+* **Multiple Distributions:** Supports Uniform, Gaussian (Normal), Exponential, Gamma, Log-Normal, Beta, Weibull, Cauchy, T-Student, and Binomial distributions.
 * **Two Generator Types:**
     * `general`: Uses `java.util.Random`, a standard, fast pseudo-random number generator (PRNG).
     * `secure`: Uses `java.security.SecureRandom`, a cryptographically strong PRNG (slower but less predictable).
@@ -61,6 +61,10 @@ The `param1` and `param2` fields map to the standard parameters of each distribu
 | **`gamma`** | `shape` (k) (1.0) | `scale` (&theta;) (1.0) | Gamma distribution &Gamma;(k, &theta;). |
 | **`lognormal`** | `scale` (&mu;) (0.0) | `shape` (&sigma;) (1.0) | Log-normal (mean &mu; and std. dev &sigma; of the *underlying* normal). |
 | **`beta`** | `alpha` (&alpha;) (1.0) | `beta` (&beta;) (1.0) | Beta distribution Beta(&alpha;, &beta;). |
+| **`weibull`** | `shape` (&alpha;) (1.0) | `scale` (&beta;) (1.0) | Weibull distribution W(&alpha;, &beta;). |
+| **`cauchy`** | `median` (x&#8320;) (0.0) | `scale` (&gamma;) (1.0) | Cauchy distribution C(x&#8320;, &gamma;). |
+| **`tstudent`** | `d. of freedom` (&nu;) (1.0) | *N/A* | Student's t-distribution. `param1` must be > 0. |
+| **`binomial`** | `trials` (n) (1.0) | `probability` (p) (0.5) | Binomial B(n, p). `param1` is truncated to an integer (n &ge; 0). |
 
 ---
 
@@ -141,4 +145,4 @@ If you require a larger dataset or more consistent availability, you have two op
 
 1. **Contact me** to discuss your use case. You can do it through my email albertoplazamontesdm@gmail.com
 
-2. **Run it on your own computer**: This project is open-source. You can download the latest release, launch the app with the count validation limit you need, and run the API on your own machine for unlimited and private use.
+2. **Run it on your own computer**: This project is open-source. You can download the latest release (o enlaza tu repo), modify the count validation limit in RandomService.kt, and run the API on your own machine for unlimited and private use.
