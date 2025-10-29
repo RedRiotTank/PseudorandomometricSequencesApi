@@ -145,4 +145,4 @@ If you require a larger dataset or more consistent availability, you have two op
 
 1. **Contact me** to discuss your use case. You can do it through my email albertoplazamontesdm@gmail.com
 
-2. **Run it on your own computer**: This project is open-source. You can download the latest release (o enlaza tu repo), modify the count validation limit in RandomService.kt, and run the API on your own machine for unlimited and private use.
+2. **Run it on your own computer**: This project is open-source. You can download the latest release (or link your repo), modify the count validation limit in RandomService.kt, and run the API on your own machine for unlimited and private use.
