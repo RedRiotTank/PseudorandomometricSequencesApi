@@ -120,7 +120,13 @@
             <plugin>
                 <groupId>org.jetbrains.dokka</groupId>
                 <artifactId>dokka-maven-plugin</artifactId>
-                <version>2.0.0</version>
+                <version>1.9.10</version>
+                <configuration>
+                    <outputFormat>html</outputFormat>
+                    <includes>
+                        <include>./module.md</include>
+                    </includes>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
