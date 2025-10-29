@@ -21,7 +21,7 @@ jobs:
 
       - name: Build with Maven
 
-        run: mvn clean package -DskipTests
+        run: mvn clean package
 
       - name: Deploy project files via SCP
         uses: appleboy/scp-action@v0.1.7
