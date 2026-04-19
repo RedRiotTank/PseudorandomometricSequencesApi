@@ -18,7 +18,7 @@ data class RandomSequenceResponse(
     @get:Schema(
         description = "The probability distribution used (e.g., 'uniform', 'gaussian').",
         allowableValues = ["uniform", "gaussian", "exponential", "gamma", "lognormal", "beta",
-            "weibull", "cauchy", "t-student", "binomial", "poisson", "triangular"],
+            "weibull", "cauchy", "t-student", "binomial", "poisson", "triangular", "chi-squared"],
         example = "uniform"
     )
     val distribution: String,
