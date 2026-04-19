@@ -7,6 +7,7 @@ import org.apache.commons.math3.random.RandomGenerator
 import java.security.SecureRandom
 import java.util.Random
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ThreadLocalRandom
 
 private typealias GeneratorFactory = (Double?, Double?, Random, RandomGenerator) -> SequenceGenerator
 
@@ -15,6 +16,8 @@ class RandomService {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RandomService::class.java)
+
+        private val SECURE_RANDOM_INSTANCE by lazy { SecureRandom() }
 
         private val GENERATOR_FACTORIES: Map<String, GeneratorFactory> = mapOf(
             UniformGenerator.DISTRIBUTION_NAME     to { p1, p2, jRand, _     -> UniformGenerator.create(p1, p2, jRand) },
@@ -48,11 +51,11 @@ class RandomService {
         val javaRandom: Random = when (typeName) {
             "secure" -> {
                 logger.debug("Using generator type: SecureRandom")
-                SecureRandom()
+                SECURE_RANDOM_INSTANCE
             }
             "general" ->{
                 logger.debug("Using generator type: Random (general)")
-                Random()
+                ThreadLocalRandom.current()
             }
             else -> {
                 logger.error("Invalid generator type: {}", typeName)
