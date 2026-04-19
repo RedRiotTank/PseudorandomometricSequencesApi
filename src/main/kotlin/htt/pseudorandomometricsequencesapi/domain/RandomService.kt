@@ -32,7 +32,8 @@ class RandomService {
             BinomialGenerator.DISTRIBUTION_NAME    to { p1, p2, _,  _,     cRand -> BinomialGenerator.create(p1, p2, cRand) },
             PoissonGenerator.DISTRIBUTION_NAME     to { p1, _,  _,  _,     cRand -> PoissonGenerator.create(p1, cRand) },
             TriangularGenerator.DISTRIBUTION_NAME  to { p1, p2, p3, _,     cRand -> TriangularGenerator.create(p1, p2, p3, cRand) },
-            ChiSquaredGenerator.DISTRIBUTION_NAME  to { p1, _,  _,  _,     cRand -> ChiSquaredGenerator.create(p1, cRand) }
+            ChiSquaredGenerator.DISTRIBUTION_NAME  to { p1, _,  _,  _,     cRand -> ChiSquaredGenerator.create(p1, cRand) },
+            ParetoGenerator.DISTRIBUTION_NAME      to { p1, p2, _,  _,     cRand -> ParetoGenerator.create(p1, p2, cRand) }
         )
     }
 
