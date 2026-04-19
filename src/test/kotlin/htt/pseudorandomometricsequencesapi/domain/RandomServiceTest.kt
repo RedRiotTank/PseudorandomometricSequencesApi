@@ -53,7 +53,7 @@ class RandomServiceTest {
 
     @Test
     fun `should throw IllegalArgumentException for invalid distribution`() {
-        val invalidDistribution = "poisson"
+        val invalidDistribution = "test"
         val exception = assertThrows<IllegalArgumentException> {
             randomService.generateSequence(10, "general", invalidDistribution)
         }

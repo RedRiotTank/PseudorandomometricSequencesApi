@@ -36,7 +36,8 @@ class RandomController(private val randomService: RandomService) {
                     "* `cauchy`: param1 = location (x₀), param2 = scale (γ)" + // x₀ y γ
                     "* `t-student`: param1 = degrees of freedom (ν), param2 = (ignored)\n" + // ν
                     "* `binomial`: param1 = trials (n) [Integer], param2 = probability (p)" + // n y p
-                    "* `poisson`: param1 = mean (λ)\n"
+                    "* `poisson`: param1 = mean (λ)\n" +
+                    "* `triangular`: param1 = min (a), param2 = mode (c), param3 = max (b)\n"
     }
 
     @Operation(
@@ -81,8 +82,9 @@ class RandomController(private val randomService: RandomService) {
         @Parameter(
             description = DISTRIBUTION_DESCRIPTION,
             schema = Schema(allowableValues = [
-                "uniform","gaussian","exponential","gamma","lognormal","beta", "weibull", "cauchy", "t-student",
-                "binomial, poisson"]),
+                "uniform", "gaussian", "exponential", "gamma", "lognormal", "beta", "weibull", "cauchy", "t-student",
+                "binomial", "poisson", "triangular"
+            ]),
             example = "gaussian"
         )
         @RequestParam(defaultValue = "uniform") distribution: String,
@@ -99,19 +101,27 @@ class RandomController(private val randomService: RandomService) {
             required = false,
             example = "1.0"
         )
-        @RequestParam(required = false) param2: Double?
+        @RequestParam(required = false) param2: Double?,
+
+        @Parameter(
+            description = "The third parameter required by some specific distributions (e.g., maximum bound for triangular).",
+            required = false,
+            example = "1.0"
+        )
+        @RequestParam(required = false) param3: Double?
 
     ): RandomSequenceResponse {
 
-        logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}]",
-            count, type, distribution, param1, param2)
+        logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}, {}]",
+            count, type, distribution, param1, param2, param3)
 
         val sequence = randomService.generateSequence(
             count,
             type,
             distribution,
             param1,
-            param2
+            param2,
+            param3
         )
 
         logger.info("<- Request completed successfully. Count generated: {}, Distribution: '{}'. First element: {}",
