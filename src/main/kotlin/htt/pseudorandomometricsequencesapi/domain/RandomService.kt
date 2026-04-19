@@ -29,7 +29,8 @@ class RandomService {
             WeibullGenerator.DISTRIBUTION_NAME     to { p1, p2, _,     cRand -> WeibullGenerator.create(p1, p2, cRand) },
             CauchyGenerator.DISTRIBUTION_NAME      to { p1, p2, _,     cRand -> CauchyGenerator.create(p1, p2, cRand) },
             TStudentGenerator.DISTRIBUTION_NAME    to { p1, _,  _,     cRand -> TStudentGenerator.create(p1, cRand) },
-            BinomialGenerator.DISTRIBUTION_NAME    to { p1, p2, _,     cRand -> BinomialGenerator.create(p1, p2, cRand) }
+            BinomialGenerator.DISTRIBUTION_NAME    to { p1, p2, _,     cRand -> BinomialGenerator.create(p1, p2, cRand) },
+            PoissonGenerator.DISTRIBUTION_NAME     to { p1, _,  _,     cRand -> PoissonGenerator.create(p1, cRand) }
         )
     }
 

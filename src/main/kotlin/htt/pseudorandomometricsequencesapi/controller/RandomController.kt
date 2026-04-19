@@ -35,7 +35,8 @@ class RandomController(private val randomService: RandomService) {
                     "* `weibull`: param1 = shape (k), param2 = scale (λ)\n" + // k y λ
                     "* `cauchy`: param1 = location (x₀), param2 = scale (γ)" + // x₀ y γ
                     "* `t-student`: param1 = degrees of freedom (ν), param2 = (ignored)\n" + // ν
-                    "* `binomial`: param1 = trials (n) [Integer], param2 = probability (p)" // n y p
+                    "* `binomial`: param1 = trials (n) [Integer], param2 = probability (p)" + // n y p
+                    "* `poisson`: param1 = mean (λ)\n"
     }
 
     @Operation(
@@ -81,7 +82,7 @@ class RandomController(private val randomService: RandomService) {
             description = DISTRIBUTION_DESCRIPTION,
             schema = Schema(allowableValues = [
                 "uniform","gaussian","exponential","gamma","lognormal","beta", "weibull", "cauchy", "t-student",
-                "binomial"]),
+                "binomial, poisson"]),
             example = "gaussian"
         )
         @RequestParam(defaultValue = "uniform") distribution: String,
