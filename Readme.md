@@ -46,25 +46,29 @@ Generates a sequence of pseudo-random numbers based on the provided query parame
 | `distribution` | String | `uniform` | The probability distribution to sample from. |
 | `param1` | Double | (varies) | The first parameter for the distribution (see table below). |
 | `param2` | Double | (varies) | The second parameter for the distribution (see table below). |
-
+| `param3` | Double | (varies) | The third parameter (used only by specific distributions like `triangular`). |
 ---
 
 ## 📊 Supported Distributions
 
-The `param1` and `param2` fields map to the standard parameters of each distribution. If omitted, they use common defaults.
+The `param1`, `param2`, and `param3` fields map to the standard parameters of each distribution. If omitted, they use common defaults.
 
-| `distribution` | `param1` (Default) | `param2` (Default) | Description |
-| :--- | :--- | :--- | :--- |
-| **`uniform`** | `min` (0.0) | `max` (1.0) | Uniform distribution U(a, b). |
-| **`gaussian`** | `mean` (&mu;) (0.0) | `std. dev` (&sigma;) (1.0) | Normal distribution N(&mu;, &sigma;&sup2;). |
-| **`exponential`** | `mean` (1/&lambda;) (1.0) | *N/A* | Exponential distribution with a given mean. |
-| **`gamma`** | `shape` (k) (1.0) | `scale` (&theta;) (1.0) | Gamma distribution &Gamma;(k, &theta;). |
-| **`lognormal`** | `scale` (&mu;) (0.0) | `shape` (&sigma;) (1.0) | Log-normal (mean &mu; and std. dev &sigma; of the *underlying* normal). |
-| **`beta`** | `alpha` (&alpha;) (1.0) | `beta` (&beta;) (1.0) | Beta distribution Beta(&alpha;, &beta;). |
-| **`weibull`** | `shape` (&alpha;) (1.0) | `scale` (&beta;) (1.0) | Weibull distribution W(&alpha;, &beta;). |
-| **`cauchy`** | `median` (x&#8320;) (0.0) | `scale` (&gamma;) (1.0) | Cauchy distribution C(x&#8320;, &gamma;). |
-| **`tstudent`** | `d. of freedom` (&nu;) (1.0) | *N/A* | Student's t-distribution. `param1` must be > 0. |
-| **`binomial`** | `trials` (n) (1.0) | `probability` (p) (0.5) | Binomial B(n, p). `param1` is truncated to an integer (n &ge; 0). |
+| `distribution` | `param1` (Default) | `param2` (Default) | `param3` (Default) | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`uniform`** | `min` (0.0) | `max` (1.0) | *N/A* | Continuous Uniform distribution U(a, b). |
+| **`gaussian`** | `mean` (&mu;) (0.0) | `std. dev` (&sigma;) (1.0) | *N/A* | Normal distribution N(&mu;, &sigma;&sup2;). |
+| **`exponential`** | `mean` (1/&lambda;) (1.0) | *N/A* | *N/A* | Exponential distribution with a given mean. |
+| **`gamma`** | `shape` (k) (1.0) | `scale` (&theta;) (1.0) | *N/A* | Gamma distribution &Gamma;(k, &theta;). |
+| **`lognormal`** | `scale` (&mu;) (0.0) | `shape` (&sigma;) (1.0) | *N/A* | Log-normal (mean &mu; and std. dev &sigma; of the *underlying* normal). |
+| **`beta`** | `alpha` (&alpha;) (1.0) | `beta` (&beta;) (1.0) | *N/A* | Beta distribution Beta(&alpha;, &beta;). |
+| **`weibull`** | `shape` (k) (1.0) | `scale` (&lambda;) (1.0) | *N/A* | Weibull distribution W(k, &lambda;). |
+| **`cauchy`** | `location` (x&#8320;) (0.0) | `scale` (&gamma;) (1.0) | *N/A* | Cauchy distribution C(x&#8320;, &gamma;). |
+| **`t-student`** | `d. of freedom` (&nu;) (10.0) | *N/A* | *N/A* | Student's t-distribution. `param1` must be > 0. |
+| **`binomial`** | `trials` (n) (10.0) | `probability` (p) (0.5) | *N/A* | Binomial B(n, p). `param1` is truncated to an integer (n &ge; 0). |
+| **`poisson`** | `mean` (&lambda;) (1.0) | *N/A* | *N/A* | Poisson discrete distribution. |
+| **`triangular`** | `min` (a) (0.0) | `mode` (c) (0.5) | `max` (b) (1.0) | Triangular distribution for limited-data modeling. |
+| **`chi-squared`**| `d. of freedom` (k) (1.0) | *N/A* | *N/A* | Chi-squared distribution &chi;&sup2;(k). |
+| **`pareto`** | `scale` (x_m) (1.0) | `shape` (&alpha;) (1.0) | *N/A* | Pareto distribution (80/20 rule modeling). |
 
 ---
 
