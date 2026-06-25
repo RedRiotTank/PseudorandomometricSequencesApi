@@ -1,5 +1,6 @@
 package htt.pseudorandomometricsequencesapi.domain.distribution
 
+import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -60,5 +61,18 @@ class GammaGeneratorTest {
 
         assertNotNull(sampleValue)
         assertTrue(sampleValue is Double)
+    }
+
+    @Test
+    fun `sample mean should be close to theoretical mean (shape times scale)`() {
+        // Theoretical mean for Gamma(shape=2, scale=3) = shape * scale = 6.0
+        val theoreticalMean = 6.0
+        val rng = JDKRandomGenerator().also { it.setSeed(42L) }
+        val generator = GammaGenerator.create(2.0, 3.0, rng)
+        val N = 50_000
+        val sampleMean = (1..N).map { generator.sample() }.average()
+        assertTrue(sampleMean in theoreticalMean * 0.95..theoreticalMean * 1.05) {
+            "Expected mean near $theoreticalMean but got $sampleMean"
+        }
     }
 }

@@ -102,3 +102,11 @@ class BetaGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class BetaFactory : DistributionFactory {
+    override val name = BetaGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = shape α (def. 1.0), param2 = shape β (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        BetaGenerator.create(p1, p2, commonsRandom)
+}

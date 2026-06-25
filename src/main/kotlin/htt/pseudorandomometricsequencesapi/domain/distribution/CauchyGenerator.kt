@@ -87,3 +87,11 @@ class CauchyGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class CauchyFactory : DistributionFactory {
+    override val name = CauchyGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = location x₀ (def. 0.0), param2 = scale γ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        CauchyGenerator.create(p1, p2, commonsRandom)
+}

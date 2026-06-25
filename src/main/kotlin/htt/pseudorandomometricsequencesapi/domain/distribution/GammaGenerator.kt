@@ -104,3 +104,11 @@ class GammaGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class GammaFactory : DistributionFactory {
+    override val name = GammaGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = shape k (def. 1.0), param2 = scale θ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        GammaGenerator.create(p1, p2, commonsRandom)
+}

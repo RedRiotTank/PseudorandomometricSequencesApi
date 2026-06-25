@@ -87,3 +87,11 @@ class UniformGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class UniformFactory : DistributionFactory {
+    override val name = UniformGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = min a (def. 0.0), param2 = max b (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        UniformGenerator.create(p1, p2, javaRandom)
+}

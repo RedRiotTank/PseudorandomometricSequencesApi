@@ -96,3 +96,11 @@ class LogNormalGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class LogNormalFactory : DistributionFactory {
+    override val name = LogNormalGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = log-mean μ (def. 0.0), param2 = log-sigma σ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        LogNormalGenerator.create(p1, p2, commonsRandom)
+}

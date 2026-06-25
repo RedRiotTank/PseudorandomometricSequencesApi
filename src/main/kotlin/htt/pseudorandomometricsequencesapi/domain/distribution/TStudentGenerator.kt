@@ -65,3 +65,11 @@ class TStudentGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class TStudentFactory : DistributionFactory {
+    override val name = TStudentGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = degrees of freedom ν (def. 10.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        TStudentGenerator.create(p1, commonsRandom)
+}

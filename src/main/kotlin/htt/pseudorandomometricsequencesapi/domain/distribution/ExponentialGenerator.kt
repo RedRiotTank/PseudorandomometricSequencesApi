@@ -92,3 +92,11 @@ class ExponentialGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class ExponentialFactory : DistributionFactory {
+    override val name = ExponentialGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = rate λ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        ExponentialGenerator.create(p1, javaRandom)
+}

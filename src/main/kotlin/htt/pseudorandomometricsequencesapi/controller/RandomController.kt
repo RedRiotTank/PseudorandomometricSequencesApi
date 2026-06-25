@@ -7,11 +7,11 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.slf4j.LoggerFactory
 
 @Tag(
     name = "Pseudorandom Sequence Generator",
@@ -20,31 +20,15 @@ import org.slf4j.LoggerFactory
 @RestController
 @RequestMapping("/api/v1/random")
 class RandomController(private val randomService: RandomService) {
+
     companion object {
         private val logger = LoggerFactory.getLogger(RandomController::class.java)
-
-        private const val DISTRIBUTION_DESCRIPTION =
-            "The probability distribution to sample from.\n" +
-                    "**Available Distributions:**\n" +
-                    "* `uniform`: param1 = min (a), param2 = max (b)\n" +
-                    "* `gaussian`: param1 = mean (μ), param2 = std. deviation (σ)\n" + // μ y σ
-                    "* `exponential`: param1 = mean (or 1/λ)\n" + // λ
-                    "* `gamma`: param1 = shape (k), param2 = scale (θ)\n" + // θ
-                    "* `lognormal`: param1 = scale (μ), param2 = shape (σ)\n" + // μ y σ
-                    "* `beta`: param1 = α, param2 = β" + // α y β
-                    "* `weibull`: param1 = shape (k), param2 = scale (λ)\n" + // k y λ
-                    "* `cauchy`: param1 = location (x₀), param2 = scale (γ)" + // x₀ y γ
-                    "* `t-student`: param1 = degrees of freedom (ν), param2 = (ignored)\n" + // ν
-                    "* `binomial`: param1 = trials (n) [Integer], param2 = probability (p)" + // n y p
-                    "* `poisson`: param1 = mean (λ)\n" +
-                    "* `triangular`: param1 = min (a), param2 = mode (c), param3 = max (b)\n" +
-                    "* `chi-squared`: param1 = degrees of freedom (k)\n"+
-                    "* `pareto`: param1 = scale (x_m), param2 = shape (α)\n"
     }
 
     @Operation(
         summary = "Generate a Pseudorandom Number Sequence",
-        description = "Generates a list of numbers ('count') sampled from the specified probability 'distribution' using the chosen generator 'type' and its parameters.",
+        description = "Generates a list of numbers sampled from the specified probability distribution. " +
+                "See the 'distribution' parameter for the full list of available distributions and their parameters.",
         responses = [
             ApiResponse(
                 responseCode = "200",
@@ -56,60 +40,39 @@ class RandomController(private val randomService: RandomService) {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "Invalid input parameters (e.g., negative 'count', invalid 'type', or parameter mismatch for 'distribution').",
+                description = "Invalid input parameters.",
                 content = [Content(mediaType = "application/json")]
             ),
             ApiResponse(
                 responseCode = "500",
-                description = "Server error during sequence generation (e.g., internal library failure).",
+                description = "Server error during sequence generation.",
                 content = [Content(mediaType = "application/json")]
             )
         ]
     )
     @GetMapping("/sequence")
     fun getRandomSequence(
-        @Parameter(
-            description = "The number of samples to generate. Must be a positive integer.",
-            example = "100"
-        )
+        @Parameter(description = "Number of samples to generate. Must be a positive integer.", example = "100")
         @RequestParam(defaultValue = "10") count: Int,
 
         @Parameter(
-            description = "The type of random number generator to use.",
+            description = "Type of random number generator.",
             schema = Schema(allowableValues = ["general", "secure"]),
             example = "general"
         )
         @RequestParam(defaultValue = "general") type: String,
 
-        @Parameter(
-            description = DISTRIBUTION_DESCRIPTION,
-            schema = Schema(allowableValues = [
-                "uniform", "gaussian", "exponential", "gamma", "lognormal", "beta", "weibull", "cauchy", "t-student",
-                "binomial", "poisson", "triangular", "chi-squared", "pareto"
-            ]),
-            example = "gaussian"
-        )
+        // Description and allowable values are populated dynamically by DistributionSwaggerCustomizer
+        @Parameter(description = "Probability distribution to sample from.", example = "gaussian")
         @RequestParam(defaultValue = "uniform") distribution: String,
 
-        @Parameter(
-            description = "The first parameter required by the specified distribution (e.g., lower bound, mean, or shape parameter).",
-            required = false,
-            example = "0.0"
-        )
+        @Parameter(description = "First parameter of the distribution (meaning depends on the chosen distribution).", required = false, example = "0.0")
         @RequestParam(required = false) param1: Double?,
 
-        @Parameter(
-            description = "The second parameter required by the specified distribution (e.g., upper bound, standard deviation, or rate parameter).",
-            required = false,
-            example = "1.0"
-        )
+        @Parameter(description = "Second parameter of the distribution (meaning depends on the chosen distribution).", required = false, example = "1.0")
         @RequestParam(required = false) param2: Double?,
 
-        @Parameter(
-            description = "The third parameter required by some specific distributions (e.g., maximum bound for triangular).",
-            required = false,
-            example = "1.0"
-        )
+        @Parameter(description = "Third parameter of the distribution (meaning depends on the chosen distribution).", required = false, example = "1.0")
         @RequestParam(required = false) param3: Double?
 
     ): RandomSequenceResponse {
@@ -117,16 +80,9 @@ class RandomController(private val randomService: RandomService) {
         logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}, {}]",
             count, type, distribution, param1, param2, param3)
 
-        val sequence = randomService.generateSequence(
-            count,
-            type,
-            distribution,
-            param1,
-            param2,
-            param3
-        )
+        val sequence = randomService.generateSequence(count, type, distribution, param1, param2, param3)
 
-        logger.info("<- Request completed successfully. Count generated: {}, Distribution: '{}'. First element: {}",
+        logger.info("<- Request completed. Count: {}, Distribution: '{}'. First: {}",
             sequence.size, distribution, sequence.firstOrNull())
 
         return RandomSequenceResponse(

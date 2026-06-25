@@ -1,8 +1,10 @@
 package htt.pseudorandomometricsequencesapi.domain.distribution
 
+import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -49,5 +51,17 @@ class TStudentGeneratorTest {
         val sampleValue = generator.sample()
 
         assertNotNull(sampleValue)
+    }
+
+    @Test
+    fun `sample mean should be close to 0 for degrees of freedom greater than 1`() {
+        // Theoretical mean = 0 for T-distribution with nu > 1
+        val rng = JDKRandomGenerator().also { it.setSeed(42L) }
+        val generator = TStudentGenerator.create(10.0, rng)
+        val N = 50_000
+        val sampleMean = (1..N).map { generator.sample() }.average()
+        assertTrue(kotlin.math.abs(sampleMean) < 0.1) {
+            "Expected mean near 0.0 but got $sampleMean"
+        }
     }
 }
