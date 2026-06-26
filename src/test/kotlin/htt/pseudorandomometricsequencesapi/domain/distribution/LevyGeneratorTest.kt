@@ -52,4 +52,6 @@ class LevyGeneratorTest {
         // Levy distribution has support [mu, infinity), all samples must be > mu=0
         val sample = generator.sample()
         assertNotNull(sample)
-        assertTrue(sample > 0.0) { "Levy sample mu
+        assertTrue(sample > 0.0) { "Levy sample must be strictly positive (greater than mu)" }
+    }
+}

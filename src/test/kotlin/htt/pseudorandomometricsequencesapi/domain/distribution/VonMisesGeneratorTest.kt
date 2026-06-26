@@ -67,4 +67,7 @@ class VonMisesGeneratorTest {
         val meanCos = samples.map { cos(it) }.average()
         val circularMean = atan2(meanSin, meanCos)
         assertTrue(abs(circularMean) < 0.1) {
-            "Ex
+            "Expected circular mean close to 0.0, but was $circularMean"
+        }
+    }
+}

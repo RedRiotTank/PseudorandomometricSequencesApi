@@ -71,4 +71,7 @@ class LogLogisticGeneratorTest {
         val N = 50_000
         val sampleMean = (1..N).map { generator.sample() }.average()
         assertTrue(sampleMean in theoreticalMean * 0.95..theoreticalMean * 1.05) {
-            "Ex
+            "Expected sample mean close to $theoreticalMean, but was $sampleMean"
+        }
+    }
+}

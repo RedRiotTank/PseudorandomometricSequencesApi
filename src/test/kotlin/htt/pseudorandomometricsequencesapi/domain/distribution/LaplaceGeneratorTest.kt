@@ -57,9 +57,13 @@ class LaplaceGeneratorTest {
     @Test
     fun `sample mean should be close to mu=0 for default parameters`() {
         // Laplace(mu=0, b=1) has mean = mu = 0
+        val theoreticalMean = 0.0
         val rng = JDKRandomGenerator().also { it.setSeed(42L) }
         val generator = LaplaceGenerator.create(0.0, 1.0, rng)
         val N = 50_000
         val sampleMean = (1..N).map { generator.sample() }.average()
-        assertTrue(abs(sampleMean) < 0.1) {
-         
+        assertTrue(abs(sampleMean - theoreticalMean) < 0.1) {
+            "Expected sample mean close to $theoreticalMean, but was $sampleMean"
+        }
+    }
+}

@@ -51,4 +51,10 @@ class LogLaplaceGeneratorTest {
         val samples = (1..50_000).map { gen.sample() }.sorted()
         val median = samples[25_000]
         // Theoretical median = exp(mu) = e
+        val expectedMedian = kotlin.math.exp(mu)
+        assertTrue(kotlin.math.abs(median - expectedMedian) < 0.1) {
+            "Expected median close to $expectedMedian, but was $median"
+        }
+    }
+}
        
