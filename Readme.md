@@ -53,24 +53,78 @@ Generates a sequence of pseudo-random numbers based on the provided query parame
 
 The `param1`, `param2`, and `param3` fields map to the standard parameters of each distribution. If omitted, they use common defaults.
 
-| `distribution` | `param1` (Default) | `param2` (Default) | `param3` (Default) | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **`uniform`** | `min` (0.0) | `max` (1.0) | *N/A* | Continuous Uniform distribution U(a, b). |
-| **`gaussian`** | `mean` (&mu;) (0.0) | `std. dev` (&sigma;) (1.0) | *N/A* | Normal distribution N(&mu;, &sigma;&sup2;). |
-| **`exponential`** | `mean` (1/&lambda;) (1.0) | *N/A* | *N/A* | Exponential distribution with a given mean. |
-| **`gamma`** | `shape` (k) (1.0) | `scale` (&theta;) (1.0) | *N/A* | Gamma distribution &Gamma;(k, &theta;). |
-| **`lognormal`** | `scale` (&mu;) (0.0) | `shape` (&sigma;) (1.0) | *N/A* | Log-normal (mean &mu; and std. dev &sigma; of the *underlying* normal). |
-| **`beta`** | `alpha` (&alpha;) (1.0) | `beta` (&beta;) (1.0) | *N/A* | Beta distribution Beta(&alpha;, &beta;). |
-| **`weibull`** | `shape` (k) (1.0) | `scale` (&lambda;) (1.0) | *N/A* | Weibull distribution W(k, &lambda;). |
-| **`cauchy`** | `location` (x&#8320;) (0.0) | `scale` (&gamma;) (1.0) | *N/A* | Cauchy distribution C(x&#8320;, &gamma;). |
-| **`t-student`** | `d. of freedom` (&nu;) (10.0) | *N/A* | *N/A* | Student's t-distribution. `param1` must be > 0. |
-| **`binomial`** | `trials` (n) (10.0) | `probability` (p) (0.5) | *N/A* | Binomial B(n, p). `param1` is truncated to an integer (n &ge; 0). |
-| **`poisson`** | `mean` (&lambda;) (1.0) | *N/A* | *N/A* | Poisson discrete distribution. |
-| **`triangular`** | `min` (a) (0.0) | `mode` (c) (0.5) | `max` (b) (1.0) | Triangular distribution for limited-data modeling. |
-| **`chi-squared`**| `d. of freedom` (k) (1.0) | *N/A* | *N/A* | Chi-squared distribution &chi;&sup2;(k). |
-| **`pareto`** | `scale` (x_m) (1.0) | `shape` (&alpha;) (1.0) | *N/A* | Pareto distribution (80/20 rule modeling). |
-
----
+| Distribution | param1 (Default) | param2 (Default) | param3 (Default) |
+| :--- | :--- | :--- | :--- |
+| **arcsine** | lower bound `a` (0.0) | upper bound `b` (1.0) | - |
+| **bates** | count `n` [int] (12) | - | - |
+| **benford** | - | - | - |
+| **bernoulli** | probability `p` (0.5) | - | - |
+| **beta** | shape `α` (1.0) | shape `β` (1.0) | - |
+| **beta-binomial** | trials `n` [int] (10) | Beta shape `α` (1.0) | Beta shape `β` (1.0) |
+| **beta-negative-binomial**| successes `r` [int] (1) | Beta shape `α` (2.0) | Beta shape `β` (1.0) |
+| **binomial** | trials `n` [int] (10) | probability `p` (0.5) | - |
+| **burr** | shape `c` (1.0) | shape `k` (1.0) | - |
+| **cauchy** | location `x₀` (0.0) | scale `γ` (1.0) | - |
+| **chi** | df `k` (1.0) | - | - |
+| **chi-squared** | df `k` (1.0) | - | - |
+| **conway-maxwell-poisson**| rate `λ` (2.0) | dispersion `ν` (1.0) | - |
+| **discrete-uniform** | lower `a` [int] (0) | upper `b` [int] (9) | - |
+| **double-weibull** | shape `k` (2.0) | scale `λ` (1.0) | - |
+| **erlang** | shape `k` [int] (1) | rate `λ` (1.0) | - |
+| **exponential** | rate `λ` (1.0) | - | - |
+| **f-distribution** | num df `d1` (5.0) | den df `d2` (5.0) | - |
+| **folded-normal** | mean `μ` (0.0) | std dev `σ` (1.0) | - |
+| **frechet** | shape `α` (1.0) | scale `σ` (1.0) | location `μ` (0.0) |
+| **gamma** | shape `k` (1.0) | scale `θ` (1.0) | - |
+| **gaussian** | mean `μ` (0.0) | std dev `σ` (1.0) | - |
+| **generalized-gamma** | scale `a` (1.0) | shape `d` (1.0) | power `p` (1.0) |
+| **generalized-normal** | location `μ` (0.0) | scale `σ` (1.0) | shape `β` (2.0) |
+| **generalized-pareto** | location `μ` (0.0) | scale `σ` (1.0) | shape `ξ` (0.0) |
+| **geometric** | probability `p` (0.5) | - | - |
+| **gev** | location `μ` (0.0) | scale `σ` (1.0) | shape `ξ` (0.0) |
+| **gompertz** | shape `η` (1.0) | rate `b` (1.0) | - |
+| **gumbel** | location `μ` (0.0) | scale `β` (1.0) | - |
+| **half-cauchy** | scale `γ` (1.0) | - | - |
+| **half-normal** | scale `σ` (1.0) | - | - |
+| **hyperbolic-secant** | location `μ` (0.0) | scale `σ` (1.0) | - |
+| **hypergeometric** | pop `N` [int] (100) | successes `K` [int] (50)| draws `n` [int] (10) |
+| **inverse-gaussian** | mean `μ` (1.0) | shape `λ` (1.0) | - |
+| **irwin-hall** | count `n` [int] (12) | - | - |
+| **kumaraswamy** | shape `a` (2.0) | shape `b` (2.0) | - |
+| **laplace** | location `μ` (0.0) | scale `b` (1.0) | - |
+| **levy** | location `μ` (0.0) | scale `c` (1.0) | - |
+| **log-laplace** | loc `μ` (0.0) | scale `b` (1.0) | - |
+| **log-logistic** | scale `α` (1.0) | shape `β` (1.0) | - |
+| **logarithmic** | probability `p` (0.5) | - | - |
+| **logistic** | location `μ` (0.0) | scale `s` (1.0) | - |
+| **lognormal** | log-mean `μ` (0.0) | log-sigma `σ` (1.0) | - |
+| **lomax** | shape `α` (1.0) | scale `λ` (1.0) | - |
+| **maxwell-boltzmann** | scale `σ` (1.0) | - | - |
+| **nakagami** | shape `m` (1.0) | spread `Ω` (1.0) | - |
+| **negative-binomial** | successes `r` [int] (1) | probability `p` (0.5) | - |
+| **negative-hypergeo** | pop `N` [int] (50) | successes `K` [int] (25)| target `r` [int] (5) |
+| **noncentral-chi-sq** | df `k` (3.0) | non-centrality `λ` (1.0)| - |
+| **pareto** | scale `xm` (1.0) | shape `α` (1.0) | - |
+| **poisson** | mean `λ` (1.0) | - | - |
+| **rademacher** | - | - | - |
+| **rayleigh** | scale `σ` (1.0) | - | - |
+| **reciprocal** | lower `a` (0.1) | upper `b` (1.0) | - |
+| **rice** | non-centrality `ν` (0.0)| scale `σ` (1.0) | - |
+| **scaled-inv-chi-sq** | df `ν` (3.0) | scale `τ²` (1.0) | - |
+| **skellam** | Poisson `μ₁` (1.0) | Poisson `μ₂` (1.0) | - |
+| **skew-normal** | location `ξ` (0.0) | scale `ω` (1.0) | shape `α` (0.0) |
+| **slash** | location `μ` (0.0) | scale `σ` (1.0) | - |
+| **t-student** | df `ν` (10.0) | - | - |
+| **trapezoidal** | min `a` (0.0) | max `d` (1.0) | plateau `frac` (0.5) |
+| **triangular** | min `a` (0.0) | mode `c` (0.5) | max `b` (1.0) |
+| **truncated-normal** | mean `μ` (0.0) | std dev `σ` (1.0) | half-width `w` (3.0) |
+| **tukey-lambda** | shape `λ` (0.0) | - | - |
+| **uniform** | min `a` (0.0) | max `b` (1.0) | - |
+| **von-mises** | mean dir `μ` (0.0) | concentration `κ` (1.0) | - |
+| **weibull** | shape `k` (1.0) | scale `λ` (1.0) | - |
+| **wigner-semicircle** | radius `R` (1.0) | - | - |
+| **yule-simon** | shape `ρ` (1.5) | - | - |
+| **zipf** | elements `n` [int] (10)| exponent `s` (1.0) | - |
 
 ## 📋 Examples
 
