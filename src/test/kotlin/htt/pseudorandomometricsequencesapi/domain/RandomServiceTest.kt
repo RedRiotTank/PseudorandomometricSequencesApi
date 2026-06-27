@@ -1,5 +1,7 @@
 package htt.pseudorandomometricsequencesapi.domain
 
+import htt.pseudorandomometricsequencesapi.domain.distribution.GaussianFactory
+import htt.pseudorandomometricsequencesapi.domain.distribution.UniformFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -14,7 +16,7 @@ class RandomServiceTest {
 
     @BeforeEach
     fun setUp() {
-        randomService = RandomService()
+        randomService = RandomService(listOf(UniformFactory(), GaussianFactory()))
     }
 
     @ParameterizedTest(name = "Should fail with count: {0}")

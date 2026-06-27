@@ -63,3 +63,11 @@ class PoissonGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class PoissonFactory : DistributionFactory {
+    override val name = PoissonGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = mean λ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        PoissonGenerator.create(p1, commonsRandom)
+}

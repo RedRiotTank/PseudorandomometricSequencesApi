@@ -64,3 +64,11 @@ class TriangularGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class TriangularFactory : DistributionFactory {
+    override val name = TriangularGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = min a (def. 0.0), param2 = mode c (def. 0.5), param3 = max b (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        TriangularGenerator.create(p1, p2, p3, commonsRandom)
+}

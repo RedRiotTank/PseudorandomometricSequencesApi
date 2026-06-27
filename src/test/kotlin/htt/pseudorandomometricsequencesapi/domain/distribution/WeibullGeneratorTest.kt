@@ -1,11 +1,14 @@
 package htt.pseudorandomometricsequencesapi.domain.distribution
 
+import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import kotlin.math.sqrt
+import kotlin.math.PI
 
 class FakeCommonsRandomForWeibull : RandomGenerator {
     // Minimal implementations
@@ -57,5 +60,18 @@ class WeibullGeneratorTest {
 
         assertNotNull(sampleValue)
         assertTrue(sampleValue is Double)
+    }
+
+    @Test
+    fun `sample mean should be close to theoretical mean for shape=2 scale=1`() {
+        // Theoretical mean for Weibull(shape=2, scale=1) = scale * Gamma(1 + 1/shape) = 1 * Gamma(1.5) = sqrt(pi)/2
+        val theoreticalMean = sqrt(PI) / 2.0  // approx 0.8862
+        val rng = JDKRandomGenerator().also { it.setSeed(42L) }
+        val generator = WeibullGenerator.create(2.0, 1.0, rng)
+        val N = 50_000
+        val sampleMean = (1..N).map { generator.sample() }.average()
+        assertTrue(sampleMean in theoreticalMean * 0.95..theoreticalMean * 1.05) {
+            "Expected mean near $theoreticalMean but got $sampleMean"
+        }
     }
 }

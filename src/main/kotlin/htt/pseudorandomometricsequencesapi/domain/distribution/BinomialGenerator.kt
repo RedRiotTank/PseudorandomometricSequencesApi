@@ -73,3 +73,11 @@ class BinomialGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class BinomialFactory : DistributionFactory {
+    override val name = BinomialGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = trials n [integer] (def. 10), param2 = probability p (def. 0.5)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        BinomialGenerator.create(p1, p2, commonsRandom)
+}

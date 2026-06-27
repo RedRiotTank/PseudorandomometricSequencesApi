@@ -1,41 +1,23 @@
 package htt.pseudorandomometricsequencesapi.domain
 
-import htt.pseudorandomometricsequencesapi.domain.distribution.*
-import org.springframework.stereotype.Service
+import htt.pseudorandomometricsequencesapi.domain.distribution.DistributionFactory
+import htt.pseudorandomometricsequencesapi.domain.distribution.SequenceGenerator
 import org.apache.commons.math3.random.JDKRandomGenerator
-import org.apache.commons.math3.random.RandomGenerator
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.security.SecureRandom
 import java.util.Random
-import org.slf4j.LoggerFactory
 import java.util.concurrent.ThreadLocalRandom
 
-private typealias GeneratorFactory = (Double?, Double?, Double?, Random, RandomGenerator) -> SequenceGenerator
-
 @Service
-class RandomService {
+class RandomService(factories: List<DistributionFactory>) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RandomService::class.java)
-
         private val SECURE_RANDOM_INSTANCE by lazy { SecureRandom() }
-
-        private val GENERATOR_FACTORIES: Map<String, GeneratorFactory> = mapOf(
-            UniformGenerator.DISTRIBUTION_NAME     to { p1, p2, _,  jRand, _     -> UniformGenerator.create(p1, p2, jRand) },
-            GaussianGenerator.DISTRIBUTION_NAME    to { p1, p2, _,  jRand, _     -> GaussianGenerator.create(p1, p2, jRand) },
-            ExponentialGenerator.DISTRIBUTION_NAME to { p1, _,  _,  jRand, _     -> ExponentialGenerator.create(p1, jRand) },
-            GammaGenerator.DISTRIBUTION_NAME       to { p1, p2, _,  _,     cRand -> GammaGenerator.create(p1, p2, cRand) },
-            LogNormalGenerator.DISTRIBUTION_NAME   to { p1, p2, _,  _,     cRand -> LogNormalGenerator.create(p1, p2, cRand) },
-            BetaGenerator.DISTRIBUTION_NAME        to { p1, p2, _,  _,     cRand -> BetaGenerator.create(p1, p2, cRand) },
-            WeibullGenerator.DISTRIBUTION_NAME     to { p1, p2, _,  _,     cRand -> WeibullGenerator.create(p1, p2, cRand) },
-            CauchyGenerator.DISTRIBUTION_NAME      to { p1, p2, _,  _,     cRand -> CauchyGenerator.create(p1, p2, cRand) },
-            TStudentGenerator.DISTRIBUTION_NAME    to { p1, _,  _,  _,     cRand -> TStudentGenerator.create(p1, cRand) },
-            BinomialGenerator.DISTRIBUTION_NAME    to { p1, p2, _,  _,     cRand -> BinomialGenerator.create(p1, p2, cRand) },
-            PoissonGenerator.DISTRIBUTION_NAME     to { p1, _,  _,  _,     cRand -> PoissonGenerator.create(p1, cRand) },
-            TriangularGenerator.DISTRIBUTION_NAME  to { p1, p2, p3, _,     cRand -> TriangularGenerator.create(p1, p2, p3, cRand) },
-            ChiSquaredGenerator.DISTRIBUTION_NAME  to { p1, _,  _,  _,     cRand -> ChiSquaredGenerator.create(p1, cRand) },
-            ParetoGenerator.DISTRIBUTION_NAME      to { p1, p2, _,  _,     cRand -> ParetoGenerator.create(p1, p2, cRand) }
-        )
     }
+
+    private val registry: Map<String, DistributionFactory> = factories.associateBy { it.name }
 
     fun generateSequence(
         count: Int,
@@ -44,10 +26,9 @@ class RandomService {
         param1: Double? = null,
         param2: Double? = null,
         param3: Double? = null
-
     ): List<Double> {
         require(count > 0) { "Count must be positive." }
-        require(count <= 2000000) {"Count cannot be greater than 2,000,000"}
+        require(count <= 2000000) { "Count cannot be greater than 2,000,000" }
 
         logger.debug("Count validation successful: {}", count)
 
@@ -59,7 +40,7 @@ class RandomService {
                 logger.debug("Using generator type: SecureRandom")
                 SECURE_RANDOM_INSTANCE
             }
-            "general" ->{
+            "general" -> {
                 logger.debug("Using generator type: Random (general)")
                 ThreadLocalRandom.current()
             }
@@ -75,22 +56,19 @@ class RandomService {
 
         logger.debug("Apache Commons Math generator seed: {}", seedValue)
 
-        val factory = GENERATOR_FACTORIES[distributionName]
+        val factory = registry[distributionName]
             ?: throw IllegalArgumentException("Invalid Distribution: $distributionName. Use one of the supported types.")
 
         val generator: SequenceGenerator = try {
-            factory(param1, param2, param3, javaRandom, commonsRandom)
+            factory.create(param1, param2, param3, javaRandom, commonsRandom)
         } catch (e: IllegalArgumentException) {
             logger.error("Error creating generator for '{}' with Params: [{}, {}, {}]. Message: {}",
                 distributionName, param1, param2, param3, e.message)
             throw e
         }
 
-        logger.info("Built generator: {}. Samples to generate {}",
-            generator::class.simpleName, count)
+        logger.info("Built generator: {}. Samples to generate {}", generator::class.simpleName, count)
 
-        return (1..count).map {
-            generator.sample()
-        }
+        return (1..count).map { generator.sample() }
     }
 }

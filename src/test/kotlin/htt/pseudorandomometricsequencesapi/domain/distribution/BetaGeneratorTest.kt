@@ -1,5 +1,6 @@
 package htt.pseudorandomometricsequencesapi.domain.distribution
 
+import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -58,5 +59,20 @@ class BetaGeneratorTest {
 
         assertNotNull(sampleValue)
         assertTrue(sampleValue is Double)
+    }
+
+    @Test
+    fun `sample should be in (0, 1) and mean should be close to theoretical mean`() {
+        // Theoretical mean for Beta(alpha=2, beta=2) = alpha / (alpha + beta) = 0.5
+        val theoreticalMean = 0.5
+        val rng = JDKRandomGenerator().also { it.setSeed(42L) }
+        val generator = BetaGenerator.create(2.0, 2.0, rng)
+        val N = 50_000
+        val samples = (1..N).map { generator.sample() }
+        assertTrue(samples.all { it > 0.0 && it < 1.0 }) { "All Beta samples must be in (0, 1)" }
+        val sampleMean = samples.average()
+        assertTrue(sampleMean in theoreticalMean * 0.95..theoreticalMean * 1.05) {
+            "Expected mean near $theoreticalMean but got $sampleMean"
+        }
     }
 }

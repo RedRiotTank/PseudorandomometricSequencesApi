@@ -1,5 +1,6 @@
 package htt.pseudorandomometricsequencesapi.domain.distribution
 
+import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -59,5 +60,18 @@ class BinomialGeneratorTest {
 
         assertNotNull(sampleValue)
         assertTrue(sampleValue % 1.0 == 0.0)
+    }
+
+    @Test
+    fun `sample mean should be close to theoretical mean (n times p)`() {
+        // Theoretical mean for Binomial(n=10, p=0.5) = n * p = 5.0
+        val theoreticalMean = 5.0
+        val rng = JDKRandomGenerator().also { it.setSeed(42L) }
+        val generator = BinomialGenerator.create(10.0, 0.5, rng)
+        val N = 50_000
+        val sampleMean = (1..N).map { generator.sample() }.average()
+        assertTrue(sampleMean in theoreticalMean * 0.95..theoreticalMean * 1.05) {
+            "Expected mean near $theoreticalMean but got $sampleMean"
+        }
     }
 }

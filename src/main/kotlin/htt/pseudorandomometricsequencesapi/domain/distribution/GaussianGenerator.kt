@@ -93,3 +93,11 @@ class GaussianGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class GaussianFactory : DistributionFactory {
+    override val name = GaussianGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = mean μ (def. 0.0), param2 = std. deviation σ (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        GaussianGenerator.create(p1, p2, javaRandom)
+}

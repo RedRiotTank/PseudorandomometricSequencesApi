@@ -53,3 +53,11 @@ class ChiSquaredGenerator(
         }
     }
 }
+
+@org.springframework.stereotype.Component
+class ChiSquaredFactory : DistributionFactory {
+    override val name = ChiSquaredGenerator.DISTRIBUTION_NAME
+    override val description = "param1 = degrees of freedom k (def. 1.0)"
+    override fun create(p1: Double?, p2: Double?, p3: Double?, javaRandom: java.util.Random, commonsRandom: org.apache.commons.math3.random.RandomGenerator) =
+        ChiSquaredGenerator.create(p1, commonsRandom)
+}
