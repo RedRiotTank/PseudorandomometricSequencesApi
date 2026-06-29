@@ -9,6 +9,8 @@ import java.security.SecureRandom
 import java.util.Random
 import java.util.concurrent.ThreadLocalRandom
 
+data class SequenceResult(val sequence: List<Double>, val seed: Long)
+
 @Service
 class RandomService(factories: List<DistributionFactory>) {
 
@@ -25,8 +27,9 @@ class RandomService(factories: List<DistributionFactory>) {
         distribution: String,
         param1: Double? = null,
         param2: Double? = null,
-        param3: Double? = null
-    ): List<Double> {
+        param3: Double? = null,
+        seed: Long? = null
+    ): SequenceResult {
         require(count > 0) { "Count must be positive." }
         require(count <= 2000000) { "Count cannot be greater than 2,000,000" }
 
@@ -35,14 +38,12 @@ class RandomService(factories: List<DistributionFactory>) {
         val distributionName = distribution.lowercase()
         val typeName = type.lowercase()
 
-        val javaRandom: Random = when (typeName) {
+        val seedValue = seed ?: when (typeName) {
             "secure" -> {
-                logger.debug("Using generator type: SecureRandom")
-                SECURE_RANDOM_INSTANCE
+                SECURE_RANDOM_INSTANCE.nextLong()
             }
             "general" -> {
-                logger.debug("Using generator type: Random (general)")
-                ThreadLocalRandom.current()
+                ThreadLocalRandom.current().nextLong()
             }
             else -> {
                 logger.error("Invalid generator type: {}", typeName)
@@ -50,7 +51,28 @@ class RandomService(factories: List<DistributionFactory>) {
             }
         }
 
-        val seedValue = javaRandom.nextLong()
+        val javaRandom: Random = when (typeName) {
+            "secure" -> {
+                logger.debug("Using generator type: SecureRandom with seed: {}", seedValue)
+                try {
+                    SecureRandom.getInstance("SHA1PRNG").apply {
+                        setSeed(seedValue)
+                    }
+                } catch (e: Exception) {
+                    logger.warn("SHA1PRNG SecureRandom not available, falling back to java.util.Random: {}", e.message)
+                    java.util.Random(seedValue)
+                }
+            }
+            "general" -> {
+                logger.debug("Using generator type: Random (general) with seed: {}", seedValue)
+                java.util.Random(seedValue)
+            }
+            else -> {
+                logger.error("Invalid generator type: {}", typeName)
+                throw IllegalArgumentException("Invalid type. Use 'secure' or 'general'.")
+            }
+        }
+
         val commonsRandom = JDKRandomGenerator()
         commonsRandom.setSeed(seedValue)
 
@@ -69,6 +91,7 @@ class RandomService(factories: List<DistributionFactory>) {
 
         logger.info("Built generator: {}. Samples to generate {}", generator::class.simpleName, count)
 
-        return (1..count).map { generator.sample() }
+        val sequence = (1..count).map { generator.sample() }
+        return SequenceResult(sequence, seedValue)
     }
 }

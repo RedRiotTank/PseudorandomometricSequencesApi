@@ -42,7 +42,7 @@ class RandomServiceTest {
     fun `should process valid generator types`(validType: String) {
         val result = randomService.generateSequence(1, validType, "uniform", 1.0, 2.0)
         assertNotNull(result)
-        assertEquals(1, result.size)
+        assertEquals(1, result.sequence.size)
     }
 
     @Test
@@ -74,7 +74,7 @@ class RandomServiceTest {
         )
 
         assertNotNull(result)
-        assertEquals(expectedCount, result.size)
+        assertEquals(expectedCount, result.sequence.size)
     }
 
     @Test
@@ -89,7 +89,7 @@ class RandomServiceTest {
         )
 
         assertNotNull(result)
-        assertEquals(expectedCount, result.size)
+        assertEquals(expectedCount, result.sequence.size)
     }
 
     @Test
@@ -98,5 +98,32 @@ class RandomServiceTest {
             randomService.generateSequence(1, "general", "uniform", param1 = 1.0, param2 = null)
         }
         assertNotNull(exception.message)
+    }
+
+    @Test
+    fun `should generate identical sequences for the same seed`() {
+        val seed = 123456L
+        val result1 = randomService.generateSequence(100, "general", "uniform", 0.0, 1.0, seed = seed)
+        val result2 = randomService.generateSequence(100, "general", "uniform", 0.0, 1.0, seed = seed)
+        assertEquals(result1.sequence, result2.sequence)
+        assertEquals(seed, result1.seed)
+        assertEquals(seed, result2.seed)
+    }
+
+    @Test
+    fun `should generate identical sequences for the same seed with secure generator`() {
+        val seed = 987654321L
+        val result1 = randomService.generateSequence(100, "secure", "gaussian", 0.0, 1.0, seed = seed)
+        val result2 = randomService.generateSequence(100, "secure", "gaussian", 0.0, 1.0, seed = seed)
+        assertEquals(result1.sequence, result2.sequence)
+        assertEquals(seed, result1.seed)
+        assertEquals(seed, result2.seed)
+    }
+
+    @Test
+    fun `should generate different sequences when different seeds are provided`() {
+        val result1 = randomService.generateSequence(100, "general", "uniform", 0.0, 1.0, seed = 11111L)
+        val result2 = randomService.generateSequence(100, "general", "uniform", 0.0, 1.0, seed = 22222L)
+        org.junit.jupiter.api.Assertions.assertNotEquals(result1.sequence, result2.sequence)
     }
 }
