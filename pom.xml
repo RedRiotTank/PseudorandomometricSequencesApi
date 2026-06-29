@@ -10,7 +10,7 @@
     </parent>
     <groupId>htt</groupId>
     <artifactId>PseudorandomometricSequencesApi</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
     <name>PseudorandomometricSequencesApi</name>
     <description>PseudorandomometricSequencesApi</description>
@@ -57,7 +57,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -122,7 +121,6 @@
                 <artifactId>dokka-maven-plugin</artifactId>
                 <version>1.9.10</version>
                 <configuration>
-                    <outputFormat>html</outputFormat>
                     <includes>
                         <include>./module.md</include>
                     </includes>
