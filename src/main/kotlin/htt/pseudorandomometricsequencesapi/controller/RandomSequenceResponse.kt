@@ -24,6 +24,12 @@ data class RandomSequenceResponse(
     )
     val distribution: String,
 
+    @get:Schema(
+        description = "The seed used to generate the pseudorandom sequence.",
+        example = "42"
+    )
+    val seed: Long,
+
     @get:ArraySchema(
         arraySchema = Schema(description = "The list of generated pseudorandom numbers."),
         schema = Schema(implementation = Double::class)
