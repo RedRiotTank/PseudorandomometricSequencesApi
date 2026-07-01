@@ -73,23 +73,27 @@ class RandomController(private val randomService: RandomService) {
         @RequestParam(required = false) param2: Double?,
 
         @Parameter(description = "Third parameter of the distribution (meaning depends on the chosen distribution).", required = false, example = "1.0")
-        @RequestParam(required = false) param3: Double?
+        @RequestParam(required = false) param3: Double?,
+
+        @Parameter(description = "Seed to reproduce the results.", required = false, example = "42")
+        @RequestParam(required = false) seed: Long?
 
     ): RandomSequenceResponse {
 
-        logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}, {}]",
-            count, type, distribution, param1, param2, param3)
+        logger.info("-> Sequence request received. Count: {}, Type: '{}', Dist: '{}', Params: [{}, {}, {}], Seed: {}",
+            count, type, distribution, param1, param2, param3, seed)
 
-        val sequence = randomService.generateSequence(count, type, distribution, param1, param2, param3)
+        val result = randomService.generateSequence(count, type, distribution, param1, param2, param3, seed)
 
         logger.info("<- Request completed. Count: {}, Distribution: '{}'. First: {}",
-            sequence.size, distribution, sequence.firstOrNull())
+            result.sequence.size, distribution, result.sequence.firstOrNull())
 
         return RandomSequenceResponse(
             type = type,
             count = count,
             distribution = distribution,
-            sequence = sequence
+            seed = result.seed,
+            sequence = result.sequence
         )
     }
 }
