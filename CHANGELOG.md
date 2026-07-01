@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.3.0...v0.4.0) (2026-07-01)
+
+
+### Features
+
+* :sparkles: particle physics distributions ([#16](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/issues/16)) ([8e5e0a6](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/8e5e0a6cb7702c0ec785eaab2ddc93d15e860a63))
+
 ## [0.3.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.2.0...v0.3.0) (2026-07-01)
 
 
