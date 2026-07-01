@@ -1,11 +1,28 @@
-name: Deploy Spring Boot API to Docker Server (Maven)
+name: Release and Deploy Spring Boot API
 
 on:
   push:
     branches: [master]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: maven
+
   build-and-deploy:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +37,15 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-
         run: mvn clean package
+
+      - name: Upload JAR to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: target/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy project files via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -40,14 +64,14 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: |        
+          script: |
             cd /opt/pseudorandomometricsequencesapi/
-                      
+            
             docker stop pseudorandom-api || true
             docker rm pseudorandom-api || true
-           
+            
             docker build -t pseudorandom-api:latest .
-         
+            
             docker-compose up -d
             
             echo "Deployment successful! API is running on port 8081 (default port)"
