@@ -56,6 +56,7 @@ The `param1`, `param2`, and `param3` fields map to the standard parameters of ea
 | Distribution | param1 (Default) | param2 (Default) | param3 (Default) |
 | :--- | :--- | :--- | :--- |
 | **arcsine** | lower bound `a` (0.0) | upper bound `b` (1.0) | - |
+| **argus** | endpoint `c` (1.0) | shape `χ` (1.0) | - |
 | **bates** | count `n` [int] (12) | - | - |
 | **benford** | - | - | - |
 | **bernoulli** | probability `p` (0.5) | - | - |
@@ -63,16 +64,19 @@ The `param1`, `param2`, and `param3` fields map to the standard parameters of ea
 | **beta-binomial** | trials `n` [int] (10) | Beta shape `α` (1.0) | Beta shape `β` (1.0) |
 | **beta-negative-binomial**| successes `r` [int] (1) | Beta shape `α` (2.0) | Beta shape `β` (1.0) |
 | **binomial** | trials `n` [int] (10) | probability `p` (0.5) | - |
+| **bose-einstein** | `ε/kT` (1.0) | - | - |
 | **burr** | shape `c` (1.0) | shape `k` (1.0) | - |
 | **cauchy** | location `x₀` (0.0) | scale `γ` (1.0) | - |
 | **chi** | df `k` (1.0) | - | - |
 | **chi-squared** | df `k` (1.0) | - | - |
 | **conway-maxwell-poisson**| rate `λ` (2.0) | dispersion `ν` (1.0) | - |
+| **crystal-ball** | transition `α` (1.5) | power index `n` (2.0) | - |
 | **discrete-uniform** | lower `a` [int] (0) | upper `b` [int] (9) | - |
 | **double-weibull** | shape `k` (2.0) | scale `λ` (1.0) | - |
 | **erlang** | shape `k` [int] (1) | rate `λ` (1.0) | - |
 | **exponential** | rate `λ` (1.0) | - | - |
 | **f-distribution** | num df `d1` (5.0) | den df `d2` (5.0) | - |
+| **fermi-dirac** | `ε/kT` (1.0) | - | - |
 | **folded-normal** | mean `μ` (0.0) | std dev `σ` (1.0) | - |
 | **frechet** | shape `α` (1.0) | scale `σ` (1.0) | location `μ` (0.0) |
 | **gamma** | shape `k` (1.0) | scale `θ` (1.0) | - |
@@ -91,6 +95,7 @@ The `param1`, `param2`, and `param3` fields map to the standard parameters of ea
 | **inverse-gaussian** | mean `μ` (1.0) | shape `λ` (1.0) | - |
 | **irwin-hall** | count `n` [int] (12) | - | - |
 | **kumaraswamy** | shape `a` (2.0) | shape `b` (2.0) | - |
+| **landau** | location `μ` (0.0) | scale `σ` (1.0) | - |
 | **laplace** | location `μ` (0.0) | scale `b` (1.0) | - |
 | **levy** | location `μ` (0.0) | scale `c` (1.0) | - |
 | **log-laplace** | loc `μ` (0.0) | scale `b` (1.0) | - |
@@ -100,15 +105,19 @@ The `param1`, `param2`, and `param3` fields map to the standard parameters of ea
 | **lognormal** | log-mean `μ` (0.0) | log-sigma `σ` (1.0) | - |
 | **lomax** | shape `α` (1.0) | scale `λ` (1.0) | - |
 | **maxwell-boltzmann** | scale `σ` (1.0) | - | - |
+| **maxwell-juttner** | temp `θ` (1.0) | - | - |
+| **moyal** | location `μ` (0.0) | scale `σ` (1.0) | - |
 | **nakagami** | shape `m` (1.0) | spread `Ω` (1.0) | - |
 | **negative-binomial** | successes `r` [int] (1) | probability `p` (0.5) | - |
 | **negative-hypergeo** | pop `N` [int] (50) | successes `K` [int] (25)| target `r` [int] (5) |
 | **noncentral-chi-sq** | df `k` (3.0) | non-centrality `λ` (1.0)| - |
 | **pareto** | scale `xm` (1.0) | shape `α` (1.0) | - |
+| **planck** | temp `T` (1.0) | - | - |
 | **poisson** | mean `λ` (1.0) | - | - |
 | **rademacher** | - | - | - |
 | **rayleigh** | scale `σ` (1.0) | - | - |
 | **reciprocal** | lower `a` (0.1) | upper `b` (1.0) | - |
+| **relativistic-breit-wigner** | pole mass `m₀` (1.0) | decay width `Γ` (0.1) | - |
 | **rice** | non-centrality `ν` (0.0)| scale `σ` (1.0) | - |
 | **scaled-inv-chi-sq** | df `ν` (3.0) | scale `τ²` (1.0) | - |
 | **skellam** | Poisson `μ₁` (1.0) | Poisson `μ₂` (1.0) | - |
@@ -118,8 +127,10 @@ The `param1`, `param2`, and `param3` fields map to the standard parameters of ea
 | **trapezoidal** | min `a` (0.0) | max `d` (1.0) | plateau `frac` (0.5) |
 | **triangular** | min `a` (0.0) | mode `c` (0.5) | max `b` (1.0) |
 | **truncated-normal** | mean `μ` (0.0) | std dev `σ` (1.0) | half-width `w` (3.0) |
+| **tsallis** | temp `T` (0.1) | exponent `n` (7.0) | - |
 | **tukey-lambda** | shape `λ` (0.0) | - | - |
 | **uniform** | min `a` (0.0) | max `b` (1.0) | - |
+| **voigt** | location `μ` (0.0) | Gaussian `σ` (1.0) | Lorentzian `γ` (0.5) |
 | **von-mises** | mean dir `μ` (0.0) | concentration `κ` (1.0) | - |
 | **weibull** | shape `k` (1.0) | scale `λ` (1.0) | - |
 | **wigner-semicircle** | radius `R` (1.0) | - | - |
