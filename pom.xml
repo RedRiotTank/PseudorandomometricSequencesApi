@@ -9,7 +9,7 @@
     </parent>
     <groupId>htt</groupId>
     <artifactId>PseudorandomometricSequencesApi</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.5.0</version>
     <packaging>jar</packaging>
     <name>PseudorandomometricSequencesApi</name>
     <description>PseudorandomometricSequencesApi</description>
