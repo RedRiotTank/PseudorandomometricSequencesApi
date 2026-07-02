@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.4.0...v0.5.0) (2026-07-02)
+
+
+### Features
+
+* :sparkles: seeding deployment parser error fix ([2a42760](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/2a42760fb5856007cbf9655500403ba618cdb6c9))
+* :sparkles: seeding deployment parser error fix undo ([6f949ba](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/6f949ba37eaf50458d6f1a744be5ff22655088d5))
+
 ## [0.4.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.3.0...v0.4.0) (2026-07-01)
 
 
