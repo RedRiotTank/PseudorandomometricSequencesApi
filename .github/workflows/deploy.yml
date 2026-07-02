@@ -70,7 +70,7 @@ jobs:
             docker stop pseudorandom-api || true
             docker rm pseudorandom-api || true
             
-            docker build -t pseudorandom-api:latest .
+            docker build --build-arg JAR_VERSION=${{ needs.release-please.outputs.tag_name }} -t pseudorandom-api:latest .
             
             docker-compose up -d
             
