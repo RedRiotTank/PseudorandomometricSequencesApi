@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.6.0...v0.7.0) (2026-07-02)
+
+
+### Features
+
+* :sparkles: update Docker build process to use dynamic JAR version ([91dc202](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/91dc202b16a61e0bd9b853634ee7359f21d00363))
+
 ## [0.6.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.5.0...v0.6.0) (2026-07-02)
 
 
