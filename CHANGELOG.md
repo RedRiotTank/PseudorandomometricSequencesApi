@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.5.0...v0.6.0) (2026-07-02)
+
+
+### Features
+
+* force compilation and deployment of seeding fixes ([332a94c](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/332a94c87a148a46b994a4051bc638554bd344d1))
+
 ## [0.5.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.4.0...v0.5.0) (2026-07-02)
 
 
