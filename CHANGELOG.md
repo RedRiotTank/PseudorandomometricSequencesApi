@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.0...v0.7.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* handle NoResourceFoundException to return 404 instead of 500 ([9920e5b](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/9920e5bbdaf3d74e145ee643e6ab62e3801918ce))
+
 ## [0.7.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.6.0...v0.7.0) (2026-07-02)
 
 
