@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.1...v0.7.2) (2026-09-13)
+
+
+### Bug Fixes
+
+* :bug: resolve docker build version mismatch in CI/CD" ([2b939de](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/2b939de656ba261ad3990fdea6074e482d795e47))
+* :bug: resolve docker build version mismatch in CI/CD" ([a806079](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/a8060790559cf95c3e70a9ef6bfb684a969b38c0))
+
 ## [0.7.1](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.0...v0.7.1) (2026-09-13)
 
 
