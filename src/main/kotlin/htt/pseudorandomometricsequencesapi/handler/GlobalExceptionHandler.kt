@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 /**
  * Global exception handler configured using [@ControllerAdvice][org.springframework.web.bind.annotation.ControllerAdvice].
@@ -78,6 +79,32 @@ class GlobalExceptionHandler {
             details = request.getDescription(false)
         )
         return ResponseEntity(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+    /**
+     * Handles requests for non-existent resources or endpoints.
+     *
+     * @param ex The [NoResourceFoundException] that was thrown.
+     * @param request The current [WebRequest] providing context about the request.
+     * @return A [ResponseEntity] containing [ErrorDetails] and an HTTP 404 status.
+     */
+    @ExceptionHandler(NoResourceFoundException::class)
+    @ResponseBody
+    fun handleNoResourceFoundException(
+        ex: NoResourceFoundException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+
+        logger.warn("NOT FOUND (404) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = "The requested resource was not found.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDetails)
     }
 }
 

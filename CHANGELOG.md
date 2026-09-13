@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.7.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.6.0...v0.7.0) (2026-07-02)
+
+
+### Features
+
+* :sparkles: update Docker build process to use dynamic JAR version ([91dc202](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/91dc202b16a61e0bd9b853634ee7359f21d00363))
+
+## [0.6.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.5.0...v0.6.0) (2026-07-02)
+
+
+### Features
+
+* force compilation and deployment of seeding fixes ([332a94c](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/332a94c87a148a46b994a4051bc638554bd344d1))
+
+## [0.5.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.4.0...v0.5.0) (2026-07-02)
+
+
+### Features
+
+* :sparkles: seeding deployment parser error fix ([2a42760](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/2a42760fb5856007cbf9655500403ba618cdb6c9))
+* :sparkles: seeding deployment parser error fix undo ([6f949ba](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/6f949ba37eaf50458d6f1a744be5ff22655088d5))
+
 ## [0.4.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.3.0...v0.4.0) (2026-07-01)
 
 

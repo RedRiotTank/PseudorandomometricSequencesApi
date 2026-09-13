@@ -1,6 +1,8 @@
 FROM eclipse-temurin:21-jre-jammy
 
-COPY target/*.jar app.jar
+ARG JAR_VERSION
+
+COPY target/PseudorandomometricSequencesApi-*${JAR_VERSION}.jar app.jar
 
 EXPOSE 8080
 
