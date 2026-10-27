@@ -350,6 +350,23 @@ curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random
   }'
 ```
 
+#### 3D visualization
+
+The following render was produced from 50,000 samples returned by this endpoint:
+
+![3D render of a correlated bivariate normal distribution](visualizations/multivariate_normal_3d.png)
+
+Reproduce it with the API running:
+
+```bash
+python3 scripts/render_multivariate_normal_3d.py \
+  --url http://localhost:8080 \
+  --count 50000 \
+  --seed 2026
+```
+
+The script requires `numpy` and `matplotlib`.
+
 ## ⚠️ Important Disclaimers & Usage Limits
 
 **Service Availability**
