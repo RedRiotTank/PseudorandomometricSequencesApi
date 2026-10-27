@@ -1,6 +1,7 @@
 package htt.pseudorandomometricsequencesapi.controller
 
 import htt.pseudorandomometricsequencesapi.domain.RandomService
+import htt.pseudorandomometricsequencesapi.domain.VariableSpec
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -94,6 +97,75 @@ class RandomController(private val randomService: RandomService) {
             distribution = distribution,
             seed = result.seed,
             sequence = result.sequence
+        )
+    }
+
+    @Operation(
+        summary = "Generate Multiple Pseudorandom Sequences",
+        description = "Generates one sequence per variable in a single request. Each variable can use a different " +
+                "distribution and parameters. Per-variable seeds are derived from the request-level seed, and a " +
+                "variable may override its seed to be reproducible in isolation.",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Successfully generated all pseudorandom sequences.",
+                content = [Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = MultiSequenceResponse::class)
+                )]
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid input parameters.",
+                content = [Content(mediaType = "application/json")]
+            ),
+            ApiResponse(
+                responseCode = "500",
+                description = "Server error during sequence generation.",
+                content = [Content(mediaType = "application/json")]
+            )
+        ]
+    )
+    @PostMapping("/sequences")
+    fun getRandomSequences(@RequestBody request: MultiSequenceRequest): MultiSequenceResponse {
+        logger.info(
+            "-> Multi-sequence request received. Count: {}, Type: '{}', Variables: {}, Seed: {}",
+            request.count, request.type, request.variables.size, request.seed
+        )
+
+        val result = randomService.generateSequences(
+            count = request.count,
+            type = request.type,
+            variables = request.variables.map {
+                VariableSpec(
+                    name = it.name,
+                    distribution = it.distribution,
+                    param1 = it.param1,
+                    param2 = it.param2,
+                    param3 = it.param3,
+                    seed = it.seed
+                )
+            },
+            seed = request.seed
+        )
+
+        logger.info(
+            "<- Multi-sequence request completed. Variables: {}, Samples per variable: {}",
+            result.variables.size, request.count
+        )
+
+        return MultiSequenceResponse(
+            type = request.type,
+            count = request.count,
+            seed = result.seed,
+            variables = result.variables.map {
+                VariableSequenceResponse(
+                    name = it.name,
+                    distribution = it.distribution,
+                    seed = it.seed,
+                    sequence = it.sequence
+                )
+            }
         )
     }
 }

@@ -2,6 +2,7 @@ package htt.pseudorandomometricsequencesapi.handler
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
@@ -45,6 +46,32 @@ class GlobalExceptionHandler {
         val errorDetails = ErrorDetails(
             timestamp = LocalDateTime.now(),
             message = ex.message ?: "Invalid request parameters provided.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
+    }
+
+    /**
+     * Handles malformed or missing JSON request bodies.
+     *
+     * @param ex The [HttpMessageNotReadableException] that was thrown.
+     * @param request The current [WebRequest] providing context about the request.
+     * @return A [ResponseEntity] containing [ErrorDetails] and an HTTP 400 status.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    @ResponseBody
+    fun handleHttpMessageNotReadableException(
+        ex: HttpMessageNotReadableException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+
+        logger.warn("BAD REQUEST (400) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = "Invalid or missing request body.",
             details = request.getDescription(false)
         )
 

@@ -197,6 +197,70 @@ curl "[https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequen
 }
 ```
 
+## 🧮 Multivariable Generation
+
+### `POST /api/v1/random/sequences`
+
+Generates multiple named variables in a single request. Each variable can use its own
+distribution and parameters. When a request-level `seed` is provided, every variable gets a
+deterministically derived seed, so the whole request is reproducible. A variable-level `seed`
+overrides its derived seed and makes that variable reproducible on its own.
+
+#### Request Body
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `count` | Integer | `10` | Samples per variable. **Total samples across all variables: max 2,000,000**. |
+| `type` | String | `general` | Base generator type: `general` or `secure`. |
+| `seed` | Long | (random) | Request-level seed used to derive each variable's seed. |
+| `variables` | Array | (required) | One or more variable definitions. |
+| `variables[].name` | String | `variable1`, ... | Optional unique variable name. |
+| `variables[].distribution` | String | (required) | Distribution to sample from. |
+| `variables[].param1` | Double | (varies) | First distribution parameter. |
+| `variables[].param2` | Double | (varies) | Second distribution parameter. |
+| `variables[].param3` | Double | (varies) | Third distribution parameter. |
+| `variables[].seed` | Long | (derived) | Optional seed for this variable only. |
+
+#### Example: generate temperature and humidity together
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequences" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 3,
+    "type": "general",
+    "seed": 42,
+    "variables": [
+      {"name": "temperature", "distribution": "gaussian", "param1": 20, "param2": 2},
+      {"name": "humidity", "distribution": "uniform", "param1": 30, "param2": 60}
+    ]
+  }'
+```
+
+```json
+{
+  "type": "general",
+  "count": 3,
+  "seed": 42,
+  "variables": [
+    {
+      "name": "temperature",
+      "distribution": "gaussian",
+      "seed": -5025562857975149833,
+      "sequence": [18.349, 14.874, 18.758]
+    },
+    {
+      "name": "humidity",
+      "distribution": "uniform",
+      "seed": -5843495416241995736,
+      "sequence": [36.582, 31.589, 54.264]
+    }
+  ]
+}
+```
+
+The existing single-variable `GET /api/v1/random/sequence` endpoint remains fully supported.
+
 ## ⚠️ Important Disclaimers & Usage Limits
 
 **Service Availability**
