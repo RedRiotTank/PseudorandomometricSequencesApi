@@ -17,6 +17,7 @@ This API provides a single endpoint to generate lists of floating-point numbers 
 
 * **Multiple Distributions:** Supports Uniform, Gaussian (Normal), Exponential, Gamma, Log-Normal, Beta, Weibull, Cauchy, T-Student, and Binomial distributions.
 * **Joint Multivariate Distributions:** Generate correlated vectors from multivariate normal, multivariate t, Dirichlet, and multinomial distributions.
+* **Gaussian Copula Dependence:** Correlate any mix of univariate distributions with a correlation matrix.
 * **Two Generator Types:**
     * `general`: Uses `java.util.Random`, a standard, fast pseudo-random number generator (PRNG).
     * `secure`: Uses `java.security.SecureRandom`, a cryptographically strong PRNG (slower but less predictable).
@@ -279,6 +280,94 @@ curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random
     "distribution": "dirichlet",
     "concentration": [2.0, 5.0, 3.0]
   }'
+```
+
+## 🪢 Statistically Dependent Variables (Gaussian Copula)
+
+### `POST /api/v1/random/copula`
+
+Generates several sequences with a chosen **rank dependence** while each sequence keeps its own
+marginal distribution. Any registered univariate distribution can be used, including discrete
+ones. This is the endpoint to use when you need correlated Gamma, Beta, Lognormal, Poisson, or
+mixed-distribution series.
+
+The Gaussian copula works by:
+
+1. Drawing latent correlated normal values from the supplied correlation matrix.
+2. Converting them to uniforms with the standard normal CDF.
+3. Mapping each uniform through the marginal distribution's inverse CDF.
+
+Because some distributions in this project are custom, marginal inverse CDFs are approximated
+with empirical quantile tables built from the existing generators. Increase `quantileSamples`
+for better tail accuracy.
+
+#### Dependence semantics
+
+- `correlation` controls the Gaussian-copula dependence.
+- For normal marginals, the resulting Pearson correlation is approximately the specified value.
+- For non-normal marginals, Pearson correlation depends on the marginals; the **rank**
+  (Spearman) correlation follows the copula:
+  `rho_S = (6 / pi) * asin(rho / 2)`.
+- Use `0.0` off-diagonal entries for independent variables.
+
+#### Request Body
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `count` | Integer | `10` | Samples per variable. |
+| `type` | String | `general` | Base generator type: `general` or `secure`. |
+| `seed` | Long | (random) | Seed used to reproduce the dependent sequences. |
+| `correlation` | Double[][] | (required) | Symmetric positive-definite correlation matrix; diagonal must be `1.0`. |
+| `variables` | Array | (required) | One or more marginal variable definitions. |
+| `variables[].name` | String | `variable1`, ... | Optional unique variable name. |
+| `variables[].distribution` | String | (required) | Any registered univariate distribution. |
+| `variables[].param1` | Double | (varies) | First distribution parameter. |
+| `variables[].param2` | Double | (varies) | Second distribution parameter. |
+| `variables[].param3` | Double | (varies) | Third distribution parameter. |
+| `quantileSamples` | Integer | `100000` | Empirical quantile table size: `10000`–`1000000`. |
+
+**Limits:** at most 100 variables; `count × variables ≤ 2,000,000`; and
+`quantileSamples × variables ≤ 20,000,000`.
+
+#### Example: correlated Gamma and Beta series
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/copula" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 3,
+    "seed": 42,
+    "quantileSamples": 100000,
+    "correlation": [[1.0, 0.7], [0.7, 1.0]],
+    "variables": [
+      {"name": "demand", "distribution": "gamma", "param1": 2, "param2": 1},
+      {"name": "conversion", "distribution": "beta", "param1": 5, "param2": 2}
+    ]
+  }'
+```
+
+```json
+{
+  "type": "general",
+  "count": 3,
+  "copula": "gaussian",
+  "marginalMethod": "empirical-quantile",
+  "seed": 42,
+  "quantileSamples": 100000,
+  "correlation": [[1.0, 0.7], [0.7, 1.0]],
+  "variables": [
+    {
+      "name": "demand",
+      "distribution": "gamma",
+      "sequence": [0.322257, 1.034677, 0.963052]
+    },
+    {
+      "name": "conversion",
+      "distribution": "beta",
+      "sequence": [0.236642, 0.686152, 0.707296]
+    }
+  ]
+}
 ```
 
 ## ⚠️ Important Disclaimers & Usage Limits
