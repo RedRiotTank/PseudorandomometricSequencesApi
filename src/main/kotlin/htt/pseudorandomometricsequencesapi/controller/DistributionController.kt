@@ -1,6 +1,7 @@
 package htt.pseudorandomometricsequencesapi.controller
 
 import htt.pseudorandomometricsequencesapi.domain.distribution.DistributionFactory
+import htt.pseudorandomometricsequencesapi.domain.multivariate.MultivariateDistributionFactory
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
@@ -13,7 +14,10 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 @RequestMapping("/api/v1/distributions")
-class DistributionController(private val factories: List<DistributionFactory>) {
+class DistributionController(
+    private val factories: List<DistributionFactory>,
+    private val multivariateFactories: List<MultivariateDistributionFactory>
+) {
 
     @Operation(
         summary = "Get all available distributions",
@@ -22,6 +26,21 @@ class DistributionController(private val factories: List<DistributionFactory>) {
     @GetMapping
     fun getDistributions(): List<DistributionInfo> {
         return factories.map {
+            DistributionInfo(
+                name = it.name,
+                description = it.description
+            )
+        }.sortedBy { it.name }
+    }
+
+    @Operation(
+        summary = "Get all available multivariate distributions",
+        description = "Returns a list of all available joint multivariate distributions with their parameters " +
+                "and descriptions."
+    )
+    @GetMapping("/multivariate")
+    fun getMultivariateDistributions(): List<DistributionInfo> {
+        return multivariateFactories.map {
             DistributionInfo(
                 name = it.name,
                 description = it.description

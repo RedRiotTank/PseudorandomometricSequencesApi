@@ -16,6 +16,7 @@ This API provides a single endpoint to generate lists of floating-point numbers 
 ### Key Features
 
 * **Multiple Distributions:** Supports Uniform, Gaussian (Normal), Exponential, Gamma, Log-Normal, Beta, Weibull, Cauchy, T-Student, and Binomial distributions.
+* **Joint Multivariate Distributions:** Generate correlated vectors from multivariate normal, multivariate t, Dirichlet, and multinomial distributions.
 * **Two Generator Types:**
     * `general`: Uses `java.util.Random`, a standard, fast pseudo-random number generator (PRNG).
     * `secure`: Uses `java.security.SecureRandom`, a cryptographically strong PRNG (slower but less predictable).
@@ -197,7 +198,11 @@ curl "[https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequen
 }
 ```
 
-## 🧮 Multivariable Generation
+## 🧮 Independent Multi-Variable Generation
+
+> **These variables are independent.** This endpoint bundles several univariate sequences into
+> one response, but it does not create correlations between them. For statistically dependent
+> components, use [Joint Multivariate Generation](#-joint-multivariate-generation) below.
 
 ### `POST /api/v1/random/sequences`
 
@@ -260,6 +265,90 @@ curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random
 ```
 
 The existing single-variable `GET /api/v1/random/sequence` endpoint remains fully supported.
+
+## 🔗 Joint Multivariate Generation
+
+### `POST /api/v1/random/multivariate`
+
+Generates vector-valued observations from a joint distribution. Unlike the independent
+multi-variable endpoint, the values inside each vector may be statistically dependent. The
+response contains one array per observation, in the order given by `variableNames`.
+
+`GET /api/v1/distributions/multivariate` lists the available joint distributions.
+
+#### Supported joint distributions
+
+| Distribution | Required fields | Description |
+| :--- | :--- | :--- |
+| `multivariate-normal` | `covariance` (optional `mean`) | Joint normal N(μ, Σ). Non-zero off-diagonal covariance produces correlated components. |
+| `multivariate-t` | `covariance`, `degreesOfFreedom` (optional `mean`) | Joint Student's t with scale matrix Σ and ν > 0. |
+| `dirichlet` | `concentration` | Probability vectors whose components are non-negative and sum to 1. |
+| `multinomial` | `trials`, `probabilities` | Count vectors whose components sum to `trials`. |
+
+#### Request Body
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `count` | Integer | `10` | Number of vector observations. |
+| `type` | String | `general` | Base generator type: `general` or `secure`. |
+| `seed` | Long | (random) | Seed used to reproduce the sequence. |
+| `distribution` | String | (required) | Joint distribution name. |
+| `mean` | Double[] | zeros | Mean/location vector for `multivariate-normal` and `multivariate-t`. |
+| `covariance` | Double[][] | (required for normal/t) | Symmetric positive-definite covariance/scale matrix. |
+| `degreesOfFreedom` | Double | (required for t) | ν > 0. |
+| `concentration` | Double[] | (required for dirichlet) | Concentration vector α, all values > 0. |
+| `trials` | Integer | (required for multinomial) | Number of trials per observation. |
+| `probabilities` | Double[] | (required for multinomial) | Category probabilities, non-negative and summing to 1. |
+| `variableNames` | String[] | `x1`, `x2`, ... | Optional component names; length must match the dimension. |
+
+**Limits:** `count` must be positive, and `count × dimension` must not exceed 2,000,000.
+
+#### Example: correlated bivariate normal
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/multivariate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 3,
+    "seed": 42,
+    "distribution": "multivariate-normal",
+    "mean": [0.0, 0.0],
+    "covariance": [[1.0, 0.8], [0.8, 1.0]],
+    "variableNames": ["height", "weight"]
+  }'
+```
+
+```json
+{
+  "type": "general",
+  "count": 3,
+  "distribution": "multivariate-normal",
+  "dimension": 2,
+  "seed": 42,
+  "variableNames": ["height", "weight"],
+  "sequence": [
+    [1.4325228983022713, 1.3330190510448872],
+    [-1.3446476540230368, -1.4149154862577822],
+    [0.5574866615513397, 0.7380022637698389]
+  ]
+}
+```
+
+The off-diagonal `0.8` in the covariance matrix means the two components are positively
+correlated. Set it to `0.0` for independent components.
+
+#### Example: Dirichlet probability vectors
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/multivariate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 2,
+    "seed": 7,
+    "distribution": "dirichlet",
+    "concentration": [2.0, 5.0, 3.0]
+  }'
+```
 
 ## ⚠️ Important Disclaimers & Usage Limits
 

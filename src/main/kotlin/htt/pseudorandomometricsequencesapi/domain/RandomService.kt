@@ -2,35 +2,32 @@ package htt.pseudorandomometricsequencesapi.domain
 
 import htt.pseudorandomometricsequencesapi.domain.distribution.DistributionFactory
 import htt.pseudorandomometricsequencesapi.domain.distribution.SequenceGenerator
-import org.apache.commons.math3.random.JDKRandomGenerator
-import org.apache.commons.math3.random.RandomGenerator
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.security.SecureRandom
 import java.util.Random
-import java.util.concurrent.ThreadLocalRandom
 
 /**
- * Generates pseudorandom sequences for one or more variables.
+ * Generates pseudorandom sequences for one or more independent univariate variables.
  *
  * <p>Variables are generated independently: each one receives its own random number
  * generators and its own seed. When a request-level seed is supplied, the per-variable
  * seeds are derived deterministically from it, so the same request always produces the
  * same result. A variable may also specify its own seed, which makes that variable
  * reproducible in isolation.</p>
+ *
+ * <p>For genuinely joint (correlated) vector-valued generation, see
+ * [MultivariateRandomService].</p>
  */
 @Service
 class RandomService(factories: List<DistributionFactory>) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RandomService::class.java)
-        private val SECURE_RANDOM_INSTANCE by lazy { SecureRandom() }
 
         const val MAX_SAMPLES_PER_REQUEST = 2_000_000
         private const val MAX_SAMPLES_MESSAGE = "Count cannot be greater than 2,000,000"
         private const val MAX_TOTAL_SAMPLES_MESSAGE =
             "Total samples across all variables cannot be greater than 2,000,000"
-        private const val INVALID_TYPE_MESSAGE = "Invalid type. Use 'secure' or 'general'."
     }
 
     private val registry: Map<String, DistributionFactory> = factories.associateBy { it.name }
@@ -49,8 +46,8 @@ class RandomService(factories: List<DistributionFactory>) {
     ): SequenceResult {
         validateCount(count)
 
-        val typeName = normalizeType(type)
-        val seedValue = seed ?: nextSeed(typeName)
+        val typeName = RandomSourceFactory.normalizeType(type)
+        val seedValue = seed ?: RandomSourceFactory.nextSeed(typeName)
 
         val variable = generateVariable(
             count = count,
@@ -69,7 +66,7 @@ class RandomService(factories: List<DistributionFactory>) {
     }
 
     /**
-     * Generates one sequence per requested variable.
+     * Generates one independent sequence per requested variable.
      *
      * @param count Number of samples to generate for each variable.
      * @param type Generator type (`general` or `secure`).
@@ -89,8 +86,8 @@ class RandomService(factories: List<DistributionFactory>) {
             MAX_TOTAL_SAMPLES_MESSAGE
         }
 
-        val typeName = normalizeType(type)
-        val masterSeed = seed ?: nextSeed(typeName)
+        val typeName = RandomSourceFactory.normalizeType(type)
+        val masterSeed = seed ?: RandomSourceFactory.nextSeed(typeName)
         val names = resolveNames(variables)
 
         // Always derive one seed per variable, even when the variable brings its own
@@ -125,10 +122,10 @@ class RandomService(factories: List<DistributionFactory>) {
                 "Invalid Distribution: $distributionName. Use one of the supported types."
             )
 
-        val (javaRandom, commonsRandom) = createRandomGenerators(typeName, seed)
+        val sources = RandomSourceFactory.create(typeName, seed)
 
         val generator: SequenceGenerator = try {
-            factory.create(spec.param1, spec.param2, spec.param3, javaRandom, commonsRandom)
+            factory.create(spec.param1, spec.param2, spec.param3, sources.javaRandom, sources.commonsRandom)
         } catch (e: IllegalArgumentException) {
             logger.error(
                 "Error creating generator for '{}' with Params: [{}, {}, {}]. Message: {}",
@@ -151,54 +148,10 @@ class RandomService(factories: List<DistributionFactory>) {
         )
     }
 
-    private fun createRandomGenerators(typeName: String, seed: Long): Pair<Random, RandomGenerator> {
-        val javaRandom: Random = when (typeName) {
-            "secure" -> {
-                logger.debug("Using generator type: SecureRandom with seed: {}", seed)
-                try {
-                    SecureRandom.getInstance("SHA1PRNG").apply { setSeed(seed) }
-                } catch (e: Exception) {
-                    logger.warn(
-                        "SHA1PRNG SecureRandom not available, falling back to java.util.Random: {}",
-                        e.message
-                    )
-                    Random(seed)
-                }
-            }
-
-            "general" -> {
-                logger.debug("Using generator type: Random (general) with seed: {}", seed)
-                Random(seed)
-            }
-
-            else -> throw IllegalArgumentException(INVALID_TYPE_MESSAGE)
-        }
-
-        val commonsRandom = JDKRandomGenerator().apply { setSeed(seed) }
-        logger.debug("Apache Commons Math generator seed: {}", seed)
-
-        return javaRandom to commonsRandom
-    }
-
     private fun validateCount(count: Int) {
         require(count > 0) { "Count must be positive." }
         require(count <= MAX_SAMPLES_PER_REQUEST) { MAX_SAMPLES_MESSAGE }
         logger.debug("Count validation successful: {}", count)
-    }
-
-    private fun normalizeType(type: String): String {
-        val typeName = type.lowercase()
-        if (typeName != "general" && typeName != "secure") {
-            logger.error("Invalid generator type: {}", typeName)
-            throw IllegalArgumentException(INVALID_TYPE_MESSAGE)
-        }
-        return typeName
-    }
-
-    private fun nextSeed(typeName: String): Long = when (typeName) {
-        "secure" -> SECURE_RANDOM_INSTANCE.nextLong()
-        "general" -> ThreadLocalRandom.current().nextLong()
-        else -> throw IllegalArgumentException(INVALID_TYPE_MESSAGE)
     }
 
     private fun resolveNames(variables: List<VariableSpec>): List<String> {
