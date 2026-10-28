@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.0...v0.8.1) (2026-10-28)
+
+
+### Documentation
+
+* reflect the v0.8.0 hosted deployment in the README ([08bd600](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/08bd6004fb9f31e2d2a2594c39043ba0fcb59192))
+
 ## [0.8.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.2...v0.8.0) (2026-10-28)
 
 
