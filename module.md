@@ -11,7 +11,7 @@ A simple, self-hosted REST API for generating sequences of pseudo-random numbers
 
 ## 🚀 What It Does
 
-This API provides a single endpoint to generate lists of floating-point numbers (`Double`) that follow a specific, well-known probability distribution. Instead of just getting uniformly random numbers (like `Math.random()`), you can request data that models real-world phenomena, such as heights (Gaussian), wait times (Exponential), or proportions (Beta).
+This API provides endpoints to generate lists of floating-point numbers (`Double`) that follow a specific, well-known probability distribution. Instead of just getting uniformly random numbers (like `Math.random()`), you can request data that models real-world phenomena, such as heights (Gaussian), wait times (Exponential), or proportions (Beta). You can generate one sequence, several independent variables, correlated vectors, or dependent variables joined by a copula.
 
 ### Key Features
 
@@ -48,6 +48,8 @@ Generates a sequence of pseudo-random numbers based on the provided query parame
 | `distribution` | String | `uniform` | The probability distribution to sample from. |
 | `param1` | Double | (varies) | The first parameter for the distribution (see table below). |
 | `param2` | Double | (varies) | The second parameter for the distribution (see table below). |
+| `param3` | Double | (varies) | The third parameter (used only by specific distributions like `triangular`). |
+| `seed` | Long | (random) | Seed used to reproduce the sequence. |
 
 ---
 
@@ -381,7 +383,7 @@ This is a self-hosted service provided for free. It is not a high-availability, 
 Please avoid aggressive polling or sending a large number of requests in a short period. Users who abuse the service (e.g., in a way that risks a DDoS) may have their IP address rate-limited or banned to protect the stability of the service for others.
 
 **Generation Limit**
-The API has a hard limit of 2,000,000 (2 million) numbers per single request.
+The API has a hard limit of 2,000,000 (2 million) numbers per request. For multi-variable requests, this limit applies to the total number of generated values across all variables.
 
 If you require a larger dataset or more consistent availability, you have two options:
 
