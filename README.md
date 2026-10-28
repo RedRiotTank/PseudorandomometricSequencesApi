@@ -79,10 +79,10 @@ needs nothing but an HTTP library.
 
 ## Quick Start
 
-> **Hosted vs. this branch.** The hosted instance at
-> `https://pseudorandomometricsequences.redriottank.com` currently tracks `master` and exposes the
-> univariate endpoints. The independent multi-variable and joint multivariate endpoints below ship on
-> `develop`, so run a local build to use them until the next release is tagged.
+> **Try it without installing anything.** The hosted instance at
+> `https://pseudorandomometricsequences.redriottank.com` runs the same `v0.8.0` build as `master`,
+> so every endpoint documented below is available there. Self-host when you need a higher limit,
+> isolation, or a guaranteed-availability deployment.
 
 ### 1. One univariate request (hosted, no install)
 
@@ -214,16 +214,16 @@ Any HTTP client works; there is no SDK to install and no authentication.
 
 ## API Reference
 
-| Method | Path | Purpose | Hosted (`master`) | `develop` |
-| :--- | :--- | :--- | :---: | :---: |
-| `GET` | `/api/v1/random/sequence` | One univariate sequence | ✅ | ✅ |
-| `POST` | `/api/v1/random/sequences` | Independent named sequences | — | ✅ |
-| `POST` | `/api/v1/random/multivariate` | Joint vector samples | — | ✅ |
-| `GET` | `/api/v1/distributions` | Univariate catalog | ✅ | ✅ |
-| `GET` | `/api/v1/distributions/multivariate` | Joint catalog | — | ✅ |
-| `GET` | `/swagger` | Redirect to Swagger UI | ✅ | ✅ |
-| `GET` | `/swagger-ui.html`, `/swagger-ui/index.html` | Swagger UI | ✅ | ✅ |
-| `GET` | `/v3/api-docs` | OpenAPI 3 document | ✅ | ✅ |
+| Method | Path | Purpose |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/random/sequence` | One univariate sequence |
+| `POST` | `/api/v1/random/sequences` | Independent named sequences |
+| `POST` | `/api/v1/random/multivariate` | Joint vector samples |
+| `GET` | `/api/v1/distributions` | Univariate catalog |
+| `GET` | `/api/v1/distributions/multivariate` | Joint catalog |
+| `GET` | `/swagger` | Redirect to Swagger UI |
+| `GET` | `/swagger-ui.html`, `/swagger-ui/index.html` | Swagger UI |
+| `GET` | `/v3/api-docs` | OpenAPI 3 document |
 
 There is no Actuator dependency and no `/actuator/health`. For a liveness probe, use
 `GET /api/v1/distributions` (returns `200` and a JSON array) or `GET /v3/api-docs`.
@@ -658,7 +658,7 @@ Quick reference for the most common samplers:
 ```bash
 git clone https://github.com/RedRiotTank/PseudorandomometricSequencesApi.git
 cd PseudorandomometricSequencesApi
-git checkout develop
+# master tracks the latest release; develop tracks the next version
 
 chmod +x mvnw        # the wrapper is checked in without the executable bit
 ./mvnw spring-boot:run
