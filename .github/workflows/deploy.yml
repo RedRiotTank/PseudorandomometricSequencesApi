@@ -77,12 +77,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            set -e
+            
             cd /opt/pseudorandomometricsequencesapi/
-                       
+            
             docker stop pseudorandom-api || true
             docker rm pseudorandom-api || true
             
-            docker build --no-cache --build-arg JAR_VERSION=${{ needs.release-please.outputs.tag_name }} -t pseudorandom-api:latest .
+            TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+            CLEAN_VERSION="${TAG_NAME#v}"
+            
+            docker build --no-cache --build-arg JAR_VERSION=$CLEAN_VERSION -t pseudorandom-api:latest .
             
             docker-compose up -d
             
