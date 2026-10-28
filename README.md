@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="PseudorandomometricSequencesApi_logo.png" alt="Pseudorandomometric Sequences API Logo" width="220" />
+<img src="PseudorandomometricSequencesApi_logo.png" alt="Pseudorandomometric Sequences API Logo" width="560" />
 
 <h1>Pseudorandomometric Sequences API</h1>
 
@@ -80,7 +80,7 @@ needs nothing but an HTTP library.
 ## Quick Start
 
 > **Try it without installing anything.** The hosted instance at
-> `https://pseudorandomometricsequences.redriottank.com` runs the same `v0.8.0` build as `master`,
+> `https://pseudorandomometricsequences.redriottank.com` runs the latest release tracked by `master`,
 > so every endpoint documented below is available there. Self-host when you need a higher limit,
 > isolation, or a guaranteed-availability deployment.
 
