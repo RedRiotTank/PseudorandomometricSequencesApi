@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.1...v0.8.2) (2026-10-28)
+
+
+### Documentation
+
+* resize hero logo and unpin the hosted release version ([09bcec6](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/09bcec6830dc1f48ba28f4fef7b1f0d5e3851d2c))
+
 ## [0.8.1](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.0...v0.8.1) (2026-10-28)
 
 
