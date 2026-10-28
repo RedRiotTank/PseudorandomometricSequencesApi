@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.2...v0.8.0) (2026-10-28)
+
+
+### Features
+
+* add joint multivariate distribution generation ([dc8a6e6](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/dc8a6e6431d4b353ecf1eba18f8a6f9726442a91))
+* add multivariable sequence generation ([504c374](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/504c374811cc714d4666f3c9dd4bfe8a21b8c55d))
+
+
+### Documentation
+
+* add 3D multivariate normal render ([484433f](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/484433f3861b2e5f7a315d9cb966b939a6ac9029))
+* rewrite README and license the project under Apache-2.0 ([27d549b](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/27d549b299ba56fc62799003f57bb5695560a659))
+
 ## [0.7.2](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.7.1...v0.7.2) (2026-09-13)
 
 
