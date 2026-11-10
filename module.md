@@ -132,6 +132,44 @@ curl "[https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequen
 }
 ```
 
+## 🖼️ Visualize Any Generated Sequence
+
+Any univariate distribution can be rendered as a 3D-style PNG.
+
+### `GET /api/v1/random/sequence/plot`
+
+Accepts the same parameters as `GET /api/v1/random/sequence` and returns `image/png` instead of JSON.
+It adds `width` (default `1400`), `height` (default `1000`) and `bins` (default `64`) for the image.
+The default `count` is `20000`. Discrete distributions are rendered as 3D probability bars and
+continuous distributions as a smooth empirical density surface.
+
+```bash
+curl -o gaussian_3d.png \
+  "https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequence/plot?distribution=gaussian&param1=0&param2=1&count=50000&seed=2026"
+```
+
+![3D render of a Gaussian distribution](visualizations/gaussian_3d.png)
+
+### `POST /api/v1/random/sequence/plot`
+
+Renders a sequence supplied in the request body. This is useful for visualizing one variable from
+`/api/v1/random/sequences` or `/api/v1/random/copula`.
+
+```json
+{
+  "sequence": [1.2, 0.8, 1.5, 1.1, 0.9, 1.4],
+  "distribution": "custom",
+  "seed": 42,
+  "width": 1400,
+  "height": 1000,
+  "bins": 64
+}
+```
+
+For offline rendering, `scripts/render_sequence_3d.py` supports any distribution and can also read a
+saved JSON response with `--input` (and `--variable` for multi-variable responses). It requires
+`numpy` and `matplotlib`.
+
 ## 🧮 Independent Multi-Variable Generation
 
 > **These variables are independent.** This endpoint bundles several univariate sequences into

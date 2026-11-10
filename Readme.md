@@ -200,6 +200,102 @@ curl "[https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequen
 }
 ```
 
+## 🖼️ Visualize Any Generated Sequence
+
+Every univariate distribution can be rendered as a dark-themed, 3D-style PNG directly from the API.
+The endpoint accepts the same parameters as `GET /api/v1/random/sequence`, so any series you can
+generate can also be turned into an image.
+
+### `GET /api/v1/random/sequence/plot`
+
+Generates the sequence and returns an `image/png` instead of JSON.
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `count` | Integer | `20000` | Samples used to build the plot. More samples give a smoother surface. **Max: 2,000,000**. |
+| `type` | String | `general` | Base generator type: `general` or `secure`. |
+| `distribution` | String | `uniform` | Any distribution from the table above. |
+| `param1` | Double | (varies) | First distribution parameter. |
+| `param2` | Double | (varies) | Second distribution parameter. |
+| `param3` | Double | (varies) | Third distribution parameter. |
+| `seed` | Long | (random) | Seed used to reproduce both the sequence and the image. |
+| `width` | Integer | `1400` | Image width in pixels (400–3200). |
+| `height` | Integer | `1000` | Image height in pixels (300–3200). |
+| `bins` | Integer | `64` | Histogram bins used to estimate the density (8–200). |
+
+Discrete distributions (Poisson, Binomial, Geometric, etc.) are detected automatically and rendered
+as 3D probability bars; continuous distributions are rendered as a smooth empirical density surface.
+
+**Example: save a Gaussian plot as a PNG.**
+
+```bash
+curl -o gaussian_3d.png \
+  "https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequence/plot?distribution=gaussian&param1=0&param2=1&count=50000&seed=2026"
+```
+
+![3D render of a Gaussian distribution](visualizations/gaussian_3d.png)
+
+You can also open the endpoint directly in a browser:
+
+```text
+https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequence/plot?distribution=poisson&param1=3&count=20000&seed=2026
+```
+
+### `POST /api/v1/random/sequence/plot`
+
+Renders a sequence you already have, for example one variable returned by
+`POST /api/v1/random/sequences` or `POST /api/v1/random/copula`. The response is also a PNG.
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `sequence` | Double[] | (required) | Values to render. **Max: 2,000,000**. |
+| `distribution` | String | `sequence` | Optional label used as the image title. |
+| `seed` | Long | (none) | Optional seed shown in the subtitle. |
+| `width` | Integer | `1400` | Image width in pixels (400–3200). |
+| `height` | Integer | `1000` | Image height in pixels (300–3200). |
+| `bins` | Integer | `64` | Histogram bins (8–200). |
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequence/plot" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sequence": [1.2, 0.8, 1.5, 1.1, 0.9, 1.4],
+    "distribution": "custom",
+    "seed": 42,
+    "width": 1400,
+    "height": 1000,
+    "bins": 64
+  }' \
+  --output custom_3d.png
+```
+
+### Python script
+
+`scripts/render_sequence_3d.py` produces the same kind of visualization with matplotlib. It can fetch
+a new sequence or read a saved JSON response, which makes it convenient for batch rendering or for
+using the API offline.
+
+```bash
+# Fetch a fresh sequence from the API.
+python3 scripts/render_sequence_3d.py \
+  --url http://localhost:8080 \
+  --distribution poisson --param1 3 \
+  --count 50000 --seed 2026 \
+  --output visualizations/poisson_3d.png
+
+# Render a saved /sequence response.
+python3 scripts/render_sequence_3d.py \
+  --input response.json \
+  --output visualizations/saved_3d.png
+
+# Pick one variable from a saved /sequences response.
+python3 scripts/render_sequence_3d.py \
+  --input multi_response.json --variable temperature \
+  --output visualizations/temperature_3d.png
+```
+
+The script requires `numpy` and `matplotlib`.
+
 ## 🧮 Independent Multi-Variable Generation
 
 > **These variables are independent.** This endpoint bundles several univariate sequences into
