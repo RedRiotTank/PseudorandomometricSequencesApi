@@ -11,12 +11,13 @@ A simple, self-hosted REST API for generating sequences of pseudo-random numbers
 
 ## 🚀 What It Does
 
-This API provides a single endpoint to generate lists of floating-point numbers (`Double`) that follow a specific, well-known probability distribution. Instead of just getting uniformly random numbers (like `Math.random()`), you can request data that models real-world phenomena, such as heights (Gaussian), wait times (Exponential), or proportions (Beta).
+This API provides endpoints to generate lists of floating-point numbers (`Double`) that follow a specific, well-known probability distribution. Instead of just getting uniformly random numbers (like `Math.random()`), you can request data that models real-world phenomena, such as heights (Gaussian), wait times (Exponential), or proportions (Beta). You can generate one sequence, several independent variables, correlated vectors, or dependent variables joined by a copula.
 
 ### Key Features
 
 * **Multiple Distributions:** Supports Uniform, Gaussian (Normal), Exponential, Gamma, Log-Normal, Beta, Weibull, Cauchy, T-Student, and Binomial distributions.
 * **Joint Multivariate Distributions:** Generate correlated vectors from multivariate normal, multivariate t, Dirichlet, and multinomial distributions.
+* **Gaussian Copula Dependence:** Correlate any mix of univariate distributions with a correlation matrix.
 * **Two Generator Types:**
     * `general`: Uses `java.util.Random`, a standard, fast pseudo-random number generator (PRNG).
     * `secure`: Uses `java.security.SecureRandom`, a cryptographically strong PRNG (slower but less predictable).
@@ -47,6 +48,8 @@ Generates a sequence of pseudo-random numbers based on the provided query parame
 | `distribution` | String | `uniform` | The probability distribution to sample from. |
 | `param1` | Double | (varies) | The first parameter for the distribution (see table below). |
 | `param2` | Double | (varies) | The second parameter for the distribution (see table below). |
+| `param3` | Double | (varies) | The third parameter (used only by specific distributions like `triangular`). |
+| `seed` | Long | (random) | Seed used to reproduce the sequence. |
 
 ---
 
@@ -128,6 +131,44 @@ curl "[https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequen
   ]
 }
 ```
+
+## 🖼️ Visualize Any Generated Sequence
+
+Any univariate distribution can be rendered as a 3D-style PNG.
+
+### `GET /api/v1/random/sequence/plot`
+
+Accepts the same parameters as `GET /api/v1/random/sequence` and returns `image/png` instead of JSON.
+It adds `width` (default `1400`), `height` (default `1000`) and `bins` (default `64`) for the image.
+The default `count` is `20000`. Discrete distributions are rendered as 3D probability bars and
+continuous distributions as a smooth empirical density surface.
+
+```bash
+curl -o gaussian_3d.png \
+  "https://pseudorandomometricsequences.redriottank.com/api/v1/random/sequence/plot?distribution=gaussian&param1=0&param2=1&count=50000&seed=2026"
+```
+
+![3D render of a Gaussian distribution](visualizations/gaussian_3d.png)
+
+### `POST /api/v1/random/sequence/plot`
+
+Renders a sequence supplied in the request body. This is useful for visualizing one variable from
+`/api/v1/random/sequences` or `/api/v1/random/copula`.
+
+```json
+{
+  "sequence": [1.2, 0.8, 1.5, 1.1, 0.9, 1.4],
+  "distribution": "custom",
+  "seed": 42,
+  "width": 1400,
+  "height": 1000,
+  "bins": 64
+}
+```
+
+For offline rendering, `scripts/render_sequence_3d.py` supports any distribution and can also read a
+saved JSON response with `--input` (and `--variable` for multi-variable responses). It requires
+`numpy` and `matplotlib`.
 
 ## 🧮 Independent Multi-Variable Generation
 
@@ -281,6 +322,94 @@ curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random
   }'
 ```
 
+## 🪢 Statistically Dependent Variables (Gaussian Copula)
+
+### `POST /api/v1/random/copula`
+
+Generates several sequences with a chosen **rank dependence** while each sequence keeps its own
+marginal distribution. Any registered univariate distribution can be used, including discrete
+ones. This is the endpoint to use when you need correlated Gamma, Beta, Lognormal, Poisson, or
+mixed-distribution series.
+
+The Gaussian copula works by:
+
+1. Drawing latent correlated normal values from the supplied correlation matrix.
+2. Converting them to uniforms with the standard normal CDF.
+3. Mapping each uniform through the marginal distribution's inverse CDF.
+
+Because some distributions in this project are custom, marginal inverse CDFs are approximated
+with empirical quantile tables built from the existing generators. Increase `quantileSamples`
+for better tail accuracy.
+
+#### Dependence semantics
+
+- `correlation` controls the Gaussian-copula dependence.
+- For normal marginals, the resulting Pearson correlation is approximately the specified value.
+- For non-normal marginals, Pearson correlation depends on the marginals; the **rank**
+  (Spearman) correlation follows the copula:
+  `rho_S = (6 / pi) * asin(rho / 2)`.
+- Use `0.0` off-diagonal entries for independent variables.
+
+#### Request Body
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `count` | Integer | `10` | Samples per variable. |
+| `type` | String | `general` | Base generator type: `general` or `secure`. |
+| `seed` | Long | (random) | Seed used to reproduce the dependent sequences. |
+| `correlation` | Double[][] | (required) | Symmetric positive-definite correlation matrix; diagonal must be `1.0`. |
+| `variables` | Array | (required) | One or more marginal variable definitions. |
+| `variables[].name` | String | `variable1`, ... | Optional unique variable name. |
+| `variables[].distribution` | String | (required) | Any registered univariate distribution. |
+| `variables[].param1` | Double | (varies) | First distribution parameter. |
+| `variables[].param2` | Double | (varies) | Second distribution parameter. |
+| `variables[].param3` | Double | (varies) | Third distribution parameter. |
+| `quantileSamples` | Integer | `100000` | Empirical quantile table size: `10000`–`1000000`. |
+
+**Limits:** at most 100 variables; `count × variables ≤ 2,000,000`; and
+`quantileSamples × variables ≤ 20,000,000`.
+
+#### Example: correlated Gamma and Beta series
+
+```bash
+curl -X POST "https://pseudorandomometricsequences.redriottank.com/api/v1/random/copula" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 3,
+    "seed": 42,
+    "quantileSamples": 100000,
+    "correlation": [[1.0, 0.7], [0.7, 1.0]],
+    "variables": [
+      {"name": "demand", "distribution": "gamma", "param1": 2, "param2": 1},
+      {"name": "conversion", "distribution": "beta", "param1": 5, "param2": 2}
+    ]
+  }'
+```
+
+```json
+{
+  "type": "general",
+  "count": 3,
+  "copula": "gaussian",
+  "marginalMethod": "empirical-quantile",
+  "seed": 42,
+  "quantileSamples": 100000,
+  "correlation": [[1.0, 0.7], [0.7, 1.0]],
+  "variables": [
+    {
+      "name": "demand",
+      "distribution": "gamma",
+      "sequence": [0.322257, 1.034677, 0.963052]
+    },
+    {
+      "name": "conversion",
+      "distribution": "beta",
+      "sequence": [0.236642, 0.686152, 0.707296]
+    }
+  ]
+}
+```
+
 ## ⚠️ Important Disclaimers & Usage Limits
 
 **Service Availability**
@@ -292,7 +421,7 @@ This is a self-hosted service provided for free. It is not a high-availability, 
 Please avoid aggressive polling or sending a large number of requests in a short period. Users who abuse the service (e.g., in a way that risks a DDoS) may have their IP address rate-limited or banned to protect the stability of the service for others.
 
 **Generation Limit**
-The API has a hard limit of 2,000,000 (2 million) numbers per single request.
+The API has a hard limit of 2,000,000 (2 million) numbers per request. For multi-variable requests, this limit applies to the total number of generated values across all variables.
 
 If you require a larger dataset or more consistent availability, you have two options:
 

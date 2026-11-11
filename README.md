@@ -42,7 +42,10 @@ shipping a math library to the client.</p>
 - **Reproducible by construction.** Every response echoes the seed used. Request-level seeds are
   factored into per-variable seeds for multi-variable calls, and a variable may pin its own seed.
 - **Independent *or* correlated output.** `/sequences` returns independent named streams;
-  `/multivariate` returns vectors whose components share a covariance/scale matrix.
+  `/multivariate` returns vectors whose components share a covariance/scale matrix; `/copula`
+  adds Gaussian-copula rank dependence to any mix of univariate marginals.
+- **Ready-to-share 3D renders.** `/sequence/plot` turns any distribution — or a sequence you already
+  generated — into a dark-themed PNG without a client-side plotting library.
 - **2,000,000-value budget per request,** enforced before generation so oversized asks fail fast
   with a `400` instead of consuming memory.
 - **Self-describing.** Distribution catalogs are served in JSON, and Swagger UI builds the
@@ -217,8 +220,11 @@ Any HTTP client works; there is no SDK to install and no authentication.
 | Method | Path | Purpose |
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/random/sequence` | One univariate sequence |
+| `GET` | `/api/v1/random/sequence/plot` | Render one distribution as a 3D PNG |
 | `POST` | `/api/v1/random/sequences` | Independent named sequences |
 | `POST` | `/api/v1/random/multivariate` | Joint vector samples |
+| `POST` | `/api/v1/random/copula` | Dependent sequences with Gaussian-copula rank dependence |
+| `POST` | `/api/v1/random/sequence/plot` | Render an existing sequence as a 3D PNG |
 | `GET` | `/api/v1/distributions` | Univariate catalog |
 | `GET` | `/api/v1/distributions/multivariate` | Joint catalog |
 | `GET` | `/swagger` | Redirect to Swagger UI |
@@ -422,6 +428,122 @@ python3 scripts/render_multivariate_normal_3d.py \
 The script requires `numpy` and `matplotlib`. It estimates the empirical density on a grid, draws the
 surface, and projects the sample cloud onto the floor.
 
+### Gaussian copula: `POST /api/v1/random/copula`
+
+Generates several sequences with a chosen **rank dependence** while each sequence keeps its own
+marginal distribution. Any registered univariate distribution can be used, including discrete ones.
+Use this endpoint when you need correlated Gamma, Beta, Lognormal, Poisson, or mixed-distribution
+series.
+
+The copula works by:
+
+1. Drawing latent correlated normals from the supplied correlation matrix.
+2. Converting them to uniforms with the standard normal CDF.
+3. Mapping each uniform through the marginal distribution's inverse CDF.
+
+Some distributions in this project are custom, so marginal inverse CDFs are approximated with
+empirical quantile tables built from the existing generators. Increase `quantileSamples` for better
+tail accuracy.
+
+Dependence semantics:
+
+- `correlation` controls the Gaussian-copula dependence.
+- For normal marginals, the resulting Pearson correlation is approximately the specified value.
+- For non-normal marginals, the **rank** (Spearman) correlation follows the copula:
+  `rho_S = (6 / pi) * asin(rho / 2)`.
+- Use `0.0` off-diagonal entries for independent variables.
+
+Request body:
+
+| Field | Type | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `count` | integer | `10` | Samples per variable |
+| `type` | string | `general` | `general` or `secure` |
+| `seed` | long | generated | Seed used to reproduce the dependent sequences |
+| `correlation` | double[][] | — | Required; symmetric positive-definite, diagonal `1.0` |
+| `variables` | array | — | Required; one or more marginal definitions |
+| `variables[].name` | string | `variable1`, … | Optional unique name |
+| `variables[].distribution` | string | — | Any registered univariate distribution |
+| `variables[].param1…3` | double | distribution-specific | Marginal parameters |
+| `quantileSamples` | integer | `100000` | Empirical quantile table size, `10000 … 1000000` |
+
+**Limits.** At most 100 variables; `count × variables ≤ 2,000,000`; and
+`quantileSamples × variables ≤ 20,000,000`.
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/random/copula" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "count": 3,
+    "seed": 42,
+    "quantileSamples": 100000,
+    "correlation": [[1.0, 0.7], [0.7, 1.0]],
+    "variables": [
+      {"name": "demand", "distribution": "gamma", "param1": 2, "param2": 1},
+      {"name": "conversion", "distribution": "beta", "param1": 5, "param2": 2}
+    ]
+  }'
+```
+
+The response contains one entry per variable with its `name`, `distribution`, and `sequence`, plus
+the echoed `correlation`, `seed`, `quantileSamples`, and `marginalMethod`.
+
+### Sequence visualization: `GET /api/v1/random/sequence/plot`
+
+Renders the same sequence as `GET /api/v1/random/sequence` as a dark-themed 3D PNG. The response is
+`image/png`, so it works directly in a browser or with `curl`.
+
+| Parameter | Type | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `count` | integer | `20000` | Samples used for the render, `1 … 2,000,000` |
+| `type` | string | `general` | `general` or `secure` |
+| `distribution` | string | `uniform` | Any of the univariate names |
+| `param1…3` | double | distribution-specific | Same meaning as the JSON endpoint |
+| `seed` | long | generated | Reproduces both the sequence and the image |
+| `width` | integer | `1400` | Image width, `400 … 3200` |
+| `height` | integer | `1000` | Image height, `300 … 3200` |
+| `bins` | integer | `64` | Histogram bins, `8 … 200` |
+
+Discrete distributions such as `poisson`, `binomial`, and `geometric` are detected automatically and
+rendered as 3D probability bars; continuous distributions are rendered as a smooth empirical density
+surface.
+
+```bash
+curl -o gaussian_3d.png \
+  "http://localhost:8080/api/v1/random/sequence/plot?distribution=gaussian&param1=0&param2=1&count=50000&seed=2026"
+```
+
+![3D render of a Gaussian distribution](visualizations/gaussian_3d.png)
+
+### Existing sequence visualization: `POST /api/v1/random/sequence/plot`
+
+Renders a sequence supplied in the request body. Use it for one variable returned by `/sequences` or
+`/copula`.
+
+| Field | Type | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `sequence` | number[] | — | Required; `1 … 2,000,000` values |
+| `distribution` | string | `sequence` | Optional label shown in the title |
+| `seed` | long | — | Optional value shown in the subtitle |
+| `width` | integer | `1400` | Image width, `400 … 3200` |
+| `height` | integer | `1000` | Image height, `300 … 3200` |
+| `bins` | integer | `64` | Histogram bins, `8 … 200` |
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/random/sequence/plot" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sequence": [1.2, 0.8, 1.5, 1.1, 0.9, 1.4],
+    "distribution": "custom",
+    "seed": 42
+  }' \
+  --output custom_3d.png
+```
+
+For offline or batch rendering, `scripts/render_sequence_3d.py` supports any distribution and can read
+a saved JSON response with `--input` (plus `--variable` for multi-variable responses). It requires
+`numpy` and `matplotlib`.
+
 ### Discovery and documentation
 
 ```bash
@@ -479,16 +601,21 @@ All handled errors return the same JSON envelope:
 src/main/kotlin/htt/pseudorandomometricsequencesapi/
 ├── controller/
 │   ├── RandomController.kt              # GET /sequence, POST /sequences
+│   ├── SequencePlotController.kt        # GET/POST /sequence/plot
 │   ├── MultivariateRandomController.kt  # POST /multivariate
+│   ├── CopulaRandomController.kt        # POST /copula
 │   ├── DistributionController.kt        # GET /distributions[/multivariate]
 │   ├── DistributionSwaggerCustomizer.kt # builds Swagger enum from factories
 │   └── HomeController.kt                # /swagger redirect
 ├── domain/
 │   ├── RandomService.kt                 # univariate + independent streams
 │   ├── MultivariateRandomService.kt     # joint vectors
+│   ├── CopulaRandomService.kt           # Gaussian-copula dependent marginals
 │   ├── RandomSourceFactory.kt           # general/secure RNG creation
 │   ├── distribution/                    # 81 factories + generators
-│   └── multivariate/                    # 4 joint factories + generators
+│   ├── multivariate/                    # 4 joint factories + generators
+│   ├── copula/                          # copula models
+│   └── visualization/                   # Java2D PNG renderer
 └── handler/GlobalExceptionHandler.kt    # 400/404/500 JSON
 ```
 
