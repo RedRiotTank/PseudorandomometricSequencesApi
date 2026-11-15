@@ -1,9 +1,11 @@
 package htt.pseudorandomometricsequencesapi.domain
 
+import htt.pseudorandomometricsequencesapi.config.ApiLimitsProperties
 import htt.pseudorandomometricsequencesapi.domain.distribution.DistributionFactory
 import htt.pseudorandomometricsequencesapi.domain.distribution.SequenceGenerator
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.Locale
 import java.util.Random
 
 /**
@@ -19,15 +21,14 @@ import java.util.Random
  * [MultivariateRandomService].</p>
  */
 @Service
-class RandomService(factories: List<DistributionFactory>) {
+class RandomService(
+    factories: List<DistributionFactory>,
+    private val limits: ApiLimitsProperties = ApiLimitsProperties(),
+    private val concurrency: GenerationConcurrencyLimiter = GenerationConcurrencyLimiter(limits)
+) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RandomService::class.java)
-
-        const val MAX_SAMPLES_PER_REQUEST = 2_000_000
-        private const val MAX_SAMPLES_MESSAGE = "Count cannot be greater than 2,000,000"
-        private const val MAX_TOTAL_SAMPLES_MESSAGE =
-            "Total samples across all variables cannot be greater than 2,000,000"
     }
 
     private val registry: Map<String, DistributionFactory> = factories.associateBy { it.name }
@@ -49,8 +50,7 @@ class RandomService(factories: List<DistributionFactory>) {
         val typeName = RandomSourceFactory.normalizeType(type)
         val seedValue = seed ?: RandomSourceFactory.nextSeed(typeName)
 
-        val variable = generateVariable(
-            count = count,
+        val prepared = prepareVariable(
             typeName = typeName,
             spec = VariableSpec(
                 name = "variable1",
@@ -62,7 +62,11 @@ class RandomService(factories: List<DistributionFactory>) {
             seed = seedValue
         )
 
-        return SequenceResult(variable.sequence, seedValue)
+        val budget = newBudget()
+        val plan = budget.plan(count, labelFor(prepared), prepared.generator::sample)
+        val sequence = concurrency.withPermit(count.toLong()) { plan.finish(budget) }
+
+        return SequenceResult(sequence, seedValue)
     }
 
     /**
@@ -82,8 +86,11 @@ class RandomService(factories: List<DistributionFactory>) {
     ): MultiSequenceResult {
         validateCount(count)
         require(variables.isNotEmpty()) { "At least one variable must be specified." }
-        require(count.toLong() * variables.size <= MAX_SAMPLES_PER_REQUEST) {
-            MAX_TOTAL_SAMPLES_MESSAGE
+        require(variables.size <= limits.maxVariablesPerRequest) {
+            "Too many variables: ${variables.size}. The maximum is ${limits.maxVariablesPerRequest}."
+        }
+        require(count.toLong() * variables.size <= limits.maxValuesPerRequest) {
+            maxTotalSamplesMessage()
         }
 
         val typeName = RandomSourceFactory.normalizeType(type)
@@ -96,26 +103,39 @@ class RandomService(factories: List<DistributionFactory>) {
         val seedSource = Random(masterSeed)
         val derivedSeeds = LongArray(variables.size) { seedSource.nextLong() }
 
-        val results = variables.mapIndexed { index, spec ->
+        // Build every generator before sampling so limit and parameter errors fail fast.
+        val prepared = variables.mapIndexed { index, spec ->
             val variableSeed = spec.seed ?: derivedSeeds[index]
-            generateVariable(
-                count = count,
+            prepareVariable(
                 typeName = typeName,
                 spec = spec.copy(name = names[index]),
                 seed = variableSeed
             )
         }
 
+        val budget = newBudget()
+        val plans = prepared.map { budget.plan(count, labelFor(it), it.generator::sample) }
+
+        val results = concurrency.withPermit(count.toLong() * variables.size) {
+            prepared.mapIndexed { index, variable ->
+                VariableSequence(
+                    name = variable.spec.name ?: "variable",
+                    distribution = variable.distributionName,
+                    seed = variable.seed,
+                    sequence = plans[index].finish(budget)
+                )
+            }
+        }
+
         return MultiSequenceResult(results, masterSeed)
     }
 
-    private fun generateVariable(
-        count: Int,
+    private fun prepareVariable(
         typeName: String,
         spec: VariableSpec,
         seed: Long
-    ): VariableSequence {
-        val distributionName = spec.distribution.lowercase()
+    ): PreparedVariable {
+        val distributionName = spec.distribution.lowercase(Locale.ROOT)
 
         val factory = registry[distributionName]
             ?: throw IllegalArgumentException(
@@ -135,32 +155,51 @@ class RandomService(factories: List<DistributionFactory>) {
         }
 
         logger.info(
-            "Built generator: {}. Variable: '{}'. Samples to generate: {}",
-            generator::class.simpleName, spec.name, count
+            "Built generator: {}. Variable: '{}'. Distribution: '{}'",
+            generator::class.simpleName, spec.name, distributionName
         )
 
-        val sequence = (1..count).map { generator.sample() }
-        return VariableSequence(
-            name = spec.name ?: "variable",
-            distribution = distributionName,
-            seed = seed,
-            sequence = sequence
-        )
+        return PreparedVariable(spec, distributionName, seed, generator)
     }
+
+    private fun labelFor(variable: PreparedVariable): String =
+        "variable '${variable.spec.name ?: "variable"}' using distribution '${variable.distributionName}'"
+
+    private fun newBudget(): GenerationBudget =
+        GenerationBudget(limits.maxGenerationNanos, limits.calibrationSamples)
 
     private fun validateCount(count: Int) {
         require(count > 0) { "Count must be positive." }
-        require(count <= MAX_SAMPLES_PER_REQUEST) { MAX_SAMPLES_MESSAGE }
+        require(count <= limits.maxSamplesPerRequest) { maxSamplesMessage() }
         logger.debug("Count validation successful: {}", count)
     }
+
+    private fun maxSamplesMessage(): String =
+        "Count cannot be greater than ${formatLimit(limits.maxSamplesPerRequest)}"
+
+    private fun maxTotalSamplesMessage(): String =
+        "Total samples across all variables cannot be greater than " +
+            formatLimit(limits.maxValuesPerRequest)
+
+    private fun formatLimit(value: Int): String = String.format(Locale.ROOT, "%,d", value)
 
     private fun resolveNames(variables: List<VariableSpec>): List<String> {
         val names = variables.mapIndexed { index, spec ->
             val provided = spec.name
             require(provided == null || provided.isNotBlank()) { "Variable names must not be blank." }
+            require(provided == null || provided.length <= limits.maxVariableNameLength) {
+                "Variable names must not be longer than ${limits.maxVariableNameLength} characters."
+            }
             provided?.trim() ?: "variable${index + 1}"
         }
         require(names.size == names.toSet().size) { "Variable names must be unique." }
         return names
     }
+
+    private data class PreparedVariable(
+        val spec: VariableSpec,
+        val distributionName: String,
+        val seed: Long,
+        val generator: SequenceGenerator
+    )
 }

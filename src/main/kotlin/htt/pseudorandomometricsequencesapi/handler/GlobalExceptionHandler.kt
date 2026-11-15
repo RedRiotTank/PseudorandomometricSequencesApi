@@ -1,5 +1,6 @@
 package htt.pseudorandomometricsequencesapi.handler
 
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -10,6 +11,9 @@ import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import htt.pseudorandomometricsequencesapi.domain.GenerationBudgetExceededException
+import htt.pseudorandomometricsequencesapi.domain.GenerationCapacityExceededException
+import htt.pseudorandomometricsequencesapi.security.RequestTooLargeException
 
 /**
  * Global exception handler configured using [@ControllerAdvice][org.springframework.web.bind.annotation.ControllerAdvice].
@@ -66,6 +70,10 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorDetails> {
 
+        if (ex.causeChainContains<RequestTooLargeException>()) {
+            return requestTooLargeResponse(ex, request)
+        }
+
         logger.warn("BAD REQUEST (400) in {}. Message: {}",
             request.getDescription(false), ex.message)
 
@@ -76,6 +84,91 @@ class GlobalExceptionHandler {
         )
 
         return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
+    }
+
+    /**
+     * Handles bodies that exceed the configured maximum size. The protection filter
+     * usually catches this first, but Jackson may wrap the exception while parsing.
+     */
+    @ExceptionHandler(RequestTooLargeException::class)
+    @ResponseBody
+    fun handleRequestTooLargeException(
+        ex: RequestTooLargeException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> = requestTooLargeResponse(ex, request)
+
+    /**
+     * Handles valid requests whose projected generation time exceeds the configured
+     * per-request budget. Clients should reduce `count` or choose a cheaper distribution.
+     */
+    @ExceptionHandler(GenerationBudgetExceededException::class)
+    @ResponseBody
+    fun handleGenerationBudgetExceededException(
+        ex: GenerationBudgetExceededException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+
+        logger.warn("REQUEST TOO EXPENSIVE (422) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = ex.message ?: "The requested generation is too expensive.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity(errorDetails, HttpStatus.UNPROCESSABLE_ENTITY)
+    }
+
+    @ExceptionHandler(GenerationCapacityExceededException::class)
+    @ResponseBody
+    fun handleGenerationCapacityExceededException(
+        ex: GenerationCapacityExceededException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+
+        logger.warn("SERVICE AT CAPACITY (429) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = ex.message ?: "The service is at capacity.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .header(HttpHeaders.RETRY_AFTER, "2")
+            .body(errorDetails)
+    }
+
+    private fun requestTooLargeResponse(
+        ex: Exception,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+        logger.warn("PAYLOAD TOO LARGE (413) in {}. Message: {}",
+            request.getDescription(false), ex.message)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = ex.message ?: "Request body is too large.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity(errorDetails, HttpStatus.PAYLOAD_TOO_LARGE)
+    }
+
+    private inline fun <reified T : Throwable> Throwable.causeChainContains(): Boolean {
+        var current: Throwable? = this
+        var depth = 0
+        while (current != null && depth < 32) {
+            if (current is T) {
+                return true
+            }
+            current = current.cause
+            depth++
+        }
+        return false
     }
 
     /**
@@ -102,7 +195,7 @@ class GlobalExceptionHandler {
 
         val errorDetails = ErrorDetails(
             timestamp = LocalDateTime.now(),
-            message = "An unexpected error occurred on the server: ${ex.message}",
+            message = "An unexpected error occurred on the server.",
             details = request.getDescription(false)
         )
         return ResponseEntity(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR)

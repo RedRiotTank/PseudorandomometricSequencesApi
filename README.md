@@ -44,7 +44,11 @@ shipping a math library to the client.</p>
 - **Independent *or* correlated output.** `/sequences` returns independent named streams;
   `/multivariate` returns vectors whose components share a covariance/scale matrix.
 - **2,000,000-value budget per request,** enforced before generation so oversized asks fail fast
-  with a `400` instead of consuming memory.
+  with a `400`, plus an adaptive time budget that rejects pathologically expensive distribution/count
+  combinations with a `422` before they can monopolise a CPU core.
+- **Overload protection out of the box.** Per-IP and global token buckets, a value-weighted
+  concurrency limit, body-size limits and optional gzip compression are all configurable through
+  environment variables.
 - **Self-describing.** Distribution catalogs are served in JSON, and Swagger UI builds the
   `distribution` enum from the Spring beans at startup — no hand-maintained list to drift.
 - **Predictable errors.** Structured JSON for `400`, `404`, and `500`, including malformed bodies.
@@ -698,7 +702,9 @@ docker run --rm -p 8080:8080 pseudorandom-api:latest
 `docker-compose.yml` in this repository is the maintainer's homelab configuration, not a generic
 one:
 
-- it publishes **`8081:8080`**, not `8080:8080`;
+- it binds to **`127.0.0.1:8081` by default** (override with `API_PORT`), so clients cannot bypass
+  the reverse proxy by connecting to Tomcat directly; the maintainer's server-side
+  `docker-compose.override.yml` attaches the container to `proxy_net` for the proxy to reach it;
 - it attaches the container to an **external** Docker network named `monitoring`;
 - it adds Promtail logging labels.
 
@@ -709,30 +715,58 @@ docker network create monitoring   # only needed if you keep the network block
 docker compose up -d               # API on http://localhost:8081
 ```
 
-### Raising the generation limit
+### Configuring the generation limits
 
-The 2,000,000-value ceiling is a plain constant per service. For a private, unrestricted instance,
-edit both values and their messages:
+Nothing is a compile-time constant anymore. Every limit is bound to `api.limits.*` and can be
+overridden with an environment variable (Spring Boot relaxed binding):
 
-```kotlin
-// src/main/kotlin/.../domain/RandomService.kt
-const val MAX_SAMPLES_PER_REQUEST = 2_000_000
+| Environment variable | Default | Meaning |
+| :--- | ---: | :--- |
+| `API_LIMITS_MAX_SAMPLES_PER_REQUEST` | `2000000` | Maximum `count` per call |
+| `API_LIMITS_MAX_VALUES_PER_REQUEST` | `2000000` | Maximum `count × variables` or `count × dimension` |
+| `API_LIMITS_MAX_VARIABLES_PER_REQUEST` | `100` | Maximum variables in `POST /sequences` |
+| `API_LIMITS_MAX_MULTIVARIATE_DIMENSION` | `100` | Maximum components in `POST /multivariate` |
+| `API_LIMITS_MAX_GENERATION_MILLIS` | `5000` | Adaptive per-request sampling budget |
+| `API_LIMITS_CALIBRATION_SAMPLES` | `4096` | Prefix used to estimate the request cost |
+| `API_LIMITS_MAX_CONCURRENT_VALUES` | `4000000` | Total scalar values allowed in flight at once |
+| `API_LIMITS_MAX_REQUESTS_PER_MINUTE` | `300` | Global generation requests per minute |
+| `API_LIMITS_MAX_REQUESTS_PER_MINUTE_PER_IP` | `60` | Generation requests per minute per client IP |
+| `API_LIMITS_MAX_REQUEST_BODY_BYTES` | `1048576` | Maximum JSON body size for POST endpoints |
+| `API_LIMITS_MAX_VARIABLE_NAME_LENGTH` | `128` | Maximum variable/component name length |
 
-// src/main/kotlin/.../domain/MultivariateRandomService.kt
-const val MAX_VALUES_PER_REQUEST = 2_000_000
+Example for a stronger private instance:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e API_LIMITS_MAX_GENERATION_MILLIS=15000 \
+  -e API_LIMITS_MAX_CONCURRENT_VALUES=8000000 \
+  -e API_LIMITS_MAX_REQUESTS_PER_MINUTE_PER_IP=240 \
+  pseudorandom-api:latest
 ```
 
-Keep the two `MAX_*_MESSAGE` strings in sync so clients still get an accurate `400` message. The
-multi-variable endpoint additionally enforces `count × variables`; the joint endpoint enforces
-`count × dimension`.
+The service does **not** assume that every distribution costs the same. Before generating a large
+request it samples `API_LIMITS_CALIBRATION_SAMPLES` values with the real generator, extrapolates the
+total time, and returns `422 Unprocessable Entity` if the projection is above
+`API_LIMITS_MAX_GENERATION_MILLIS`. This makes `f-distribution`, `t-student`, `chi-squared`,
+`hypergeometric`, and similarly expensive samplers fail fast instead of making the client wait
+tens of seconds. Accepted sequences are unchanged: the calibration prefix is reused, so a seed
+still reproduces exactly the same values.
 
 ### Production knobs
 
-- **Logging.** `application.properties` sets
-  `logging.level.htt.pseudorandomometricsequencesapi=DEBUG`. Raise it to `INFO` (or override with
-  `LOGGING_LEVEL_HTT_PSEUDORANDOMOMETRICSEQUENCESAPI=INFO`) to avoid per-request log volume.
+- **Logging.** The default level is `INFO`. Override it with
+  `LOGGING_LEVEL_HTT_PSEUDORANDOMOMETRICSEQUENCESAPI=DEBUG` when diagnosing a request.
 - **Reverse proxy.** `server.forward-headers-strategy=native` is already enabled, so
   `X-Forwarded-*` headers from Nginx/Traefik are honored.
+- **HTTP server.** Tomcat is capped at 64 worker threads, 100 queued connections and 1,024 total
+  connections by default (`API_TOMCAT_*` variables). Response compression is disabled by default
+  because large numeric payloads shrink only ~2× while gzip costs several seconds of CPU; enable it
+  with `API_COMPRESSION_ENABLED=true` if bandwidth matters more than latency.
+- **JVM and container.** The Dockerfile sets `-Xmx1g`; `docker-compose.yml` caps the container at
+  1.5 GiB of RAM with swap disabled. Override `JAVA_OPTS` if you raise the sample limits.
+- **Port exposure.** `docker-compose.yml` binds to `${API_PORT:-127.0.0.1:8081}:8080`. The reverse
+  proxy reaches the container over the `proxy_net` network; binding to localhost prevents clients
+  from bypassing the proxy and connecting to Tomcat directly.
 - **No auth, no CORS configuration.** The service ships without Spring Security and without CORS
   headers. Server-side clients are unaffected; browser calls from another origin need a proxy or a
   small configuration change.
@@ -747,9 +781,22 @@ for exploration, prototyping, and demos.
 storms. Traffic that risks destabilizing the instance may be rate-limited or blocked to protect
 other users.
 
-**Generation budget.** Each request is capped at 2,000,000 values (see
-[Raising the generation limit](#raising-the-generation-limit) for the exact per-endpoint rules). If
+**Generation budget.** Each request is capped at 2,000,000 values by default and is also subject to
+an adaptive 5-second sampling budget. Requests that would exceed either limit fail fast with a
+structured error (see [Configuring the generation limits](#configuring-the-generation-limits)). If
 you need larger batches or guaranteed availability, self-host or get in touch.
+
+**Overload behaviour.** Generation endpoints are protected by three independent guards:
+
+- `429 Too Many Requests` with a `Retry-After` header when the per-IP or global token bucket is
+  empty, or when the total number of values already being generated would exceed
+  `API_LIMITS_MAX_CONCURRENT_VALUES`;
+- `413 Payload Too Large` when a POST body exceeds `API_LIMITS_MAX_REQUEST_BODY_BYTES`;
+- `422 Unprocessable Entity` when the calibrated estimate says the sequence would take longer than
+  `API_LIMITS_MAX_GENERATION_MILLIS`.
+
+The distribution catalog, OpenAPI document and Swagger UI are not rate-limited, so clients can
+always discover the API even while generation traffic is being throttled.
 
 **Documentation.**
 

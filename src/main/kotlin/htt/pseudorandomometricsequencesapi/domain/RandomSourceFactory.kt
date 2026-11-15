@@ -4,6 +4,7 @@ import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.random.RandomGenerator
 import org.slf4j.LoggerFactory
 import java.security.SecureRandom
+import java.util.Locale
 import java.util.Random
 import java.util.concurrent.ThreadLocalRandom
 
@@ -18,7 +19,7 @@ object RandomSourceFactory {
     const val INVALID_TYPE_MESSAGE = "Invalid type. Use 'secure' or 'general'."
 
     fun normalizeType(type: String): String {
-        val typeName = type.lowercase()
+        val typeName = type.lowercase(Locale.ROOT)
         if (typeName != "general" && typeName != "secure") {
             logger.error("Invalid generator type: {}", typeName)
             throw IllegalArgumentException(INVALID_TYPE_MESSAGE)

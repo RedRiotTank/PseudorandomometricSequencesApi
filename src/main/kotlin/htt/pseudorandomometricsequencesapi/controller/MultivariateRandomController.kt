@@ -46,6 +46,21 @@ class MultivariateRandomController(private val multivariateRandomService: Multiv
                 content = [Content(mediaType = "application/json")]
             ),
             ApiResponse(
+                responseCode = "413",
+                description = "Request body exceeds the configured maximum size.",
+                content = [Content(mediaType = "application/json")]
+            ),
+            ApiResponse(
+                responseCode = "422",
+                description = "The request is valid but would exceed the configured generation-time budget.",
+                content = [Content(mediaType = "application/json")]
+            ),
+            ApiResponse(
+                responseCode = "429",
+                description = "Rate limit or concurrency limit exceeded. Retry after the indicated delay.",
+                content = [Content(mediaType = "application/json")]
+            ),
+            ApiResponse(
                 responseCode = "500",
                 description = "Server error during sequence generation.",
                 content = [Content(mediaType = "application/json")]

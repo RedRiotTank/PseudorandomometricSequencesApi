@@ -289,13 +289,13 @@ This is a self-hosted service provided for free. It is not a high-availability, 
 
 **Request Throttling**
 
-Please avoid aggressive polling or sending a large number of requests in a short period. Users who abuse the service (e.g., in a way that risks a DDoS) may have their IP address rate-limited or banned to protect the stability of the service for others.
+Please avoid aggressive polling or sending a large number of requests in a short period. Generation endpoints are protected by per-IP and global token buckets, a concurrency limit, and a request-body size limit. Exceeding them returns `429 Too Many Requests` with a `Retry-After` header, or `413 Payload Too Large` for oversized bodies. Users who abuse the service may have their IP address rate-limited or banned to protect the stability of the service for others.
 
 **Generation Limit**
-The API has a hard limit of 2,000,000 (2 million) numbers per single request.
+The API has a default hard limit of 2,000,000 (2 million) numbers per single request, plus an adaptive per-request time budget (5 seconds by default). A request that is valid but too expensive for the current server load is rejected with `422 Unprocessable Entity` before the full sequence is generated. Both limits are configured with environment variables; see the README section "Configuring the generation limits".
 
 If you require a larger dataset or more consistent availability, you have two options:
 
 1. **Contact me** to discuss your use case. You can do it through my email albertoplazamontesdm@gmail.com
 
-2. **Run it on your own computer**: This project is open-source. You can download the latest release (o enlaza tu repo), modify the count validation limit in RandomService.kt, and run the API on your own machine for unlimited and private use.
+2. **Run it on your own computer**: This project is open-source. You can download the latest release, raise `API_LIMITS_MAX_SAMPLES_PER_REQUEST`, `API_LIMITS_MAX_VALUES_PER_REQUEST` and `API_LIMITS_MAX_GENERATION_MILLIS`, and run the API on your own machine for private use.
