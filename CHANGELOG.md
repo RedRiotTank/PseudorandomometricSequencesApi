@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.10.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.9.0...v0.10.0) (2026-11-15)
+
+
+### Features
+
+* make generation limits configurable and harden overload handling ([f45f204](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/f45f2041ecf1d584fdc838c37cd4acad33a61120))
+
+
+### Bug Fixes
+
+* honor the configured default for copula quantile samples ([7db3346](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/7db3346fc77e9c3a122dd037f9886b89f8dfac30))
+
+
+### Documentation
+
+* list the new protection status codes ([a7c81fd](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/a7c81fd411bab4947a60daf6a4e4c039dbae274b))
+
 ## [0.9.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.2...v0.9.0) (2026-11-11)
 
 
