@@ -54,7 +54,8 @@ shipping a math library to the client.</p>
   environment variables.
 - **Self-describing.** Distribution catalogs are served in JSON, and Swagger UI builds the
   `distribution` enum from the Spring beans at startup — no hand-maintained list to drift.
-- **Predictable errors.** Structured JSON for `400`, `404`, and `500`, including malformed bodies.
+- **Predictable errors.** Structured JSON for `400`, `404`, `413`, `422`, `429`, and `500`, including
+  malformed bodies.
 - **Boring to deploy.** Kotlin 1.9.25 on Spring Boot 3.5.6 / JDK 21, packaged as a single jar with a
   Dockerfile; 620+ JUnit 5 tests cover the samplers and controller contracts.
 
