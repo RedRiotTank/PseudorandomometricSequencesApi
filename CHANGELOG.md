@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.2...v0.9.0) (2026-11-11)
+
+
+### Features
+
+* add 3D sequence plot endpoint ([4630933](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/46309338eaf20e64088ab43a6e2ba6176231722f))
+* add Gaussian copula for dependent variables ([d138a20](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/d138a2039901b8663148e6ee232459211c13511f))
+
+
+### Documentation
+
+* align API docs with multi-variable endpoints ([e71f4d2](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/commit/e71f4d22661a8455761301b910e0992657231936))
+
 ## [0.8.2](https://github.com/RedRiotTank/PseudorandomometricSequencesApi/compare/v0.8.1...v0.8.2) (2026-10-28)
 
 

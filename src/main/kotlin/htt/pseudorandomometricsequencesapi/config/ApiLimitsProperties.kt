@@ -40,6 +40,18 @@ class ApiLimitsProperties {
     /** Number of samples used to estimate the cost of a request before generating it. */
     var calibrationSamples: Int = 4_096
 
+    /** Default number of empirical quantile samples per copula marginal. */
+    var defaultQuantileSamples: Int = 100_000
+
+    /** Minimum number of empirical quantile samples per copula marginal. */
+    var minQuantileSamples: Int = 10_000
+
+    /** Maximum number of empirical quantile samples per copula marginal. */
+    var maxQuantileSamples: Int = 1_000_000
+
+    /** Maximum total quantile samples (per marginal × number of marginals) in one copula request. */
+    var maxTotalQuantileSamples: Long = 20_000_000
+
     /**
      * Total number of scalar values that may be under generation at the same time.
      * Protects both CPU and heap: two 2,000,000-value requests fit in the default
@@ -68,6 +80,19 @@ class ApiLimitsProperties {
         }
         require(maxGenerationMillis > 0) { "api.limits.max-generation-millis must be positive." }
         require(calibrationSamples > 0) { "api.limits.calibration-samples must be positive." }
+        require(defaultQuantileSamples > 0) {
+            "api.limits.default-quantile-samples must be positive."
+        }
+        require(minQuantileSamples > 0) { "api.limits.min-quantile-samples must be positive." }
+        require(maxQuantileSamples >= minQuantileSamples) {
+            "api.limits.max-quantile-samples must be at least min-quantile-samples."
+        }
+        require(defaultQuantileSamples in minQuantileSamples..maxQuantileSamples) {
+            "api.limits.default-quantile-samples must be within min/max quantile samples."
+        }
+        require(maxTotalQuantileSamples > 0) {
+            "api.limits.max-total-quantile-samples must be positive."
+        }
         require(maxConcurrentValues > 0) {
             "api.limits.max-concurrent-values must be positive."
         }
