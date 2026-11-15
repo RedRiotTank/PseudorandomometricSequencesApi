@@ -43,10 +43,11 @@ data class CopulaRequest(
 
     @get:Schema(
         description = "Number of samples used to build each empirical marginal quantile table. " +
-            "Larger values improve tail accuracy at the cost of more computation.",
+            "Larger values improve tail accuracy at the cost of more computation. Omit to use the " +
+            "server-configured default.",
         example = "100000"
     )
-    val quantileSamples: Int = 100_000
+    val quantileSamples: Int? = null
 )
 
 @Schema(description = "Definition of one marginal variable for a Gaussian-copula request.")

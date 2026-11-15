@@ -53,8 +53,10 @@ class CopulaRandomService(
         variables: List<CopulaVariableSpec>,
         correlation: List<List<Double>>,
         seed: Long? = null,
-        quantileSamples: Int = limits.defaultQuantileSamples
+        quantileSamples: Int? = null
     ): CopulaResult {
+        val effectiveQuantileSamples = quantileSamples ?: limits.defaultQuantileSamples
+
         require(count > 0) { "Count must be positive." }
         require(count <= limits.maxSamplesPerRequest) { maxSamplesMessage() }
         require(variables.isNotEmpty()) { "At least one variable must be specified." }
@@ -64,11 +66,11 @@ class CopulaRandomService(
         require(count.toLong() * variables.size <= limits.maxValuesPerRequest) {
             maxTotalSamplesMessage()
         }
-        require(quantileSamples in limits.minQuantileSamples..limits.maxQuantileSamples) {
+        require(effectiveQuantileSamples in limits.minQuantileSamples..limits.maxQuantileSamples) {
             "quantileSamples must be between ${formatLimit(limits.minQuantileSamples)} and " +
                 "${formatLimit(limits.maxQuantileSamples)}."
         }
-        require(quantileSamples.toLong() * variables.size <= limits.maxTotalQuantileSamples) {
+        require(effectiveQuantileSamples.toLong() * variables.size <= limits.maxTotalQuantileSamples) {
             "Total quantile samples across all variables cannot be greater than " +
                 "${formatLimit(limits.maxTotalQuantileSamples)}."
         }
@@ -97,7 +99,7 @@ class CopulaRandomService(
         }
 
         val workUnits =
-            quantileSamples.toLong() * variables.size + count.toLong() * variables.size
+            effectiveQuantileSamples.toLong() * variables.size + count.toLong() * variables.size
 
         val sequences = concurrency.withPermit(workUnits) {
             val budget = GenerationBudget(limits.maxGenerationNanos, limits.calibrationSamples)
@@ -106,7 +108,7 @@ class CopulaRandomService(
                     spec = spec,
                     typeName = typeName,
                     seed = quantileSeeds[index],
-                    quantileSamples = quantileSamples,
+                    quantileSamples = effectiveQuantileSamples,
                     budget = budget
                 )
             }
@@ -133,13 +135,13 @@ class CopulaRandomService(
         logger.info(
             "Generated Gaussian-copula sequence. Variables: {}, Samples: {}, Correlation dimension: {}, " +
                 "Quantile samples: {}",
-            variables.size, count, variables.size, quantileSamples
+            variables.size, count, variables.size, effectiveQuantileSamples
         )
 
         return CopulaResult(
             seed = masterSeed,
             correlation = correlationMatrix.map { row -> row.toList() },
-            quantileSamples = quantileSamples,
+            quantileSamples = effectiveQuantileSamples,
             variables = variables.mapIndexed { index, spec ->
                 CopulaVariableSequence(
                     name = names[index],
