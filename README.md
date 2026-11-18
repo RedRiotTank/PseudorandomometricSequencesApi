@@ -530,6 +530,11 @@ Opens a browser page that renders the requested distribution as an interactive 3
 with the mouse or a finger to rotate the camera, use the wheel to zoom, and double-click to reset the
 view. Hovering a bar shows its value range, density, and probability mass.
 
+The sidebar reads `GET /api/v1/distributions`, so the distribution is chosen from a selector and the
+parameter fields are rebuilt for that distribution only. Each field is labelled with its
+mathematical symbol (`μ`/`σ` for `gaussian`, `α`/`β` for `beta`, and so on) and its documented
+default value.
+
 ```bash
 open "http://localhost:8080/api/v1/random/sequence/plot/3d?distribution=gaussian&param1=0&param2=1&count=20000&seed=2026"
 ```
@@ -590,20 +595,36 @@ curl http://localhost:8080/api/v1/distributions
 curl http://localhost:8080/api/v1/distributions/multivariate
 ```
 
-Each entry contains `name` and a one-line `description` of its parameters, for example:
+Each entry contains `name`, a one-line `description` of its parameters, and a structured
+`parameters` array for univariate distributions. Each parameter exposes its API `position`, a
+human-readable `label`, the mathematical `symbol`, the `defaultValue`, and whether it is an
+`integer`. This is the metadata used by the interactive 3D viewer to show only the parameters that
+belong to the selected distribution:
 
 ```json
 [
   {
-    "name": "dirichlet",
-    "description": "concentration = concentration vector α (all values > 0); samples are probability vectors summing to 1"
+    "name": "gaussian",
+    "description": "param1 = mean μ (def. 0.0), param2 = std. deviation σ (def. 1.0)",
+    "parameters": [
+      {"position": 1, "label": "mean", "symbol": "μ", "defaultValue": 0.0, "integer": false},
+      {"position": 2, "label": "std. deviation", "symbol": "σ", "defaultValue": 1.0, "integer": false}
+    ]
   },
   {
-    "name": "multinomial",
-    "description": "trials = number of trials n (>= 0), probabilities = category probability vector p (must sum to 1.0)"
+    "name": "beta",
+    "description": "param1 = shape α (def. 1.0), param2 = shape β (def. 1.0)",
+    "parameters": [
+      {"position": 1, "label": "shape", "symbol": "α", "defaultValue": 1.0, "integer": false},
+      {"position": 2, "label": "shape", "symbol": "β", "defaultValue": 1.0, "integer": false}
+    ]
   }
 ]
 ```
+
+`GET /api/v1/distributions/multivariate` still returns the same `name` and `description` fields for
+the four joint families; joint distributions use named request fields rather than positional
+parameters, so their `parameters` array is empty.
 
 Interactive docs:
 

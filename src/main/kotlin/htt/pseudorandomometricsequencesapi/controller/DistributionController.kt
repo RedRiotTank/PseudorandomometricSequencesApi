@@ -28,7 +28,8 @@ class DistributionController(
         return factories.map {
             DistributionInfo(
                 name = it.name,
-                description = it.description
+                description = it.description,
+                parameters = DistributionParameterParser.parse(it.description)
             )
         }.sortedBy { it.name }
     }
@@ -51,5 +52,6 @@ class DistributionController(
 
 data class DistributionInfo(
     val name: String,
-    val description: String
+    val description: String,
+    val parameters: List<DistributionParameterInfo> = emptyList()
 )

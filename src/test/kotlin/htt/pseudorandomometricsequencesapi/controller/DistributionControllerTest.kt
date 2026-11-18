@@ -27,5 +27,6 @@ class DistributionControllerTest {
             .andExpect(jsonPath("$").isArray)
             .andExpect(jsonPath("$[0].name", notNullValue()))
             .andExpect(jsonPath("$[0].description", notNullValue()))
+            .andExpect(jsonPath("$[0].parameters").isArray)
     }
 }
