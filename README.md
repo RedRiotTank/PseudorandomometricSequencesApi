@@ -46,6 +46,9 @@ shipping a math library to the client.</p>
   adds Gaussian-copula rank dependence to any mix of univariate marginals.
 - **Ready-to-share 3D renders.** `/sequence/plot` turns any distribution — or a sequence you already
   generated — into a dark-themed PNG without a client-side plotting library.
+- **Interactive 3D exploration.** `/sequence/plot/3d` opens a self-contained browser viewer where the
+  same histogram can be rotated, zoomed, and inspected bar by bar. It uses Canvas 2D only, so no CDN,
+  WebGL, or third-party JavaScript is required.
 - **2,000,000-value budget per request,** enforced before generation so oversized asks fail fast
   with a `400`, plus an adaptive time budget that rejects pathologically expensive distribution/count
   combinations with a `422` before they can monopolise a CPU core.
@@ -226,6 +229,7 @@ Any HTTP client works; there is no SDK to install and no authentication.
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/random/sequence` | One univariate sequence |
 | `GET` | `/api/v1/random/sequence/plot` | Render one distribution as a 3D PNG |
+| `GET` | `/api/v1/random/sequence/plot/3d` | Open an interactive, rotatable 3D viewer |
 | `POST` | `/api/v1/random/sequences` | Independent named sequences |
 | `POST` | `/api/v1/random/multivariate` | Joint vector samples |
 | `POST` | `/api/v1/random/copula` | Dependent sequences with Gaussian-copula rank dependence |
@@ -520,6 +524,33 @@ curl -o gaussian_3d.png \
 
 ![3D render of a Gaussian distribution](visualizations/gaussian_3d.png)
 
+### Interactive 3D viewer: `GET /api/v1/random/sequence/plot/3d`
+
+Opens a browser page that renders the requested distribution as an interactive 3D histogram. Drag
+with the mouse or a finger to rotate the camera, use the wheel to zoom, and double-click to reset the
+view. Hovering a bar shows its value range, density, and probability mass.
+
+```bash
+open "http://localhost:8080/api/v1/random/sequence/plot/3d?distribution=gaussian&param1=0&param2=1&count=20000&seed=2026"
+```
+
+The page accepts the same sequence parameters as the PNG endpoint:
+
+| Parameter | Type | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `distribution` | string | `gaussian` | Any of the univariate names |
+| `param1…3` | double | distribution-specific | Same meaning as the JSON endpoint |
+| `count` | integer | `20000` | Samples fetched by the viewer, `1 … 200,000` |
+| `type` | string | `general` | `general` or `secure` |
+| `seed` | long | `42` in the page form | Reproduces the sequence |
+| `bins` | integer | `64` | Histogram bars, `8 … 120` |
+
+The page is plain HTML, CSS, and JavaScript served from
+`src/main/resources/static/sequence-plot-3d.html`. It calls `GET /api/v1/random/sequence` for the
+data and computes the histogram in the browser, so it works offline after the page and API are
+available; there is no CDN or client-side plotting dependency. The form updates the browser URL as
+you render, which makes every view a shareable link.
+
 ### Existing sequence visualization: `POST /api/v1/random/sequence/plot`
 
 Renders a sequence supplied in the request body. Use it for one variable returned by `/sequences` or
@@ -607,6 +638,7 @@ src/main/kotlin/htt/pseudorandomometricsequencesapi/
 ├── controller/
 │   ├── RandomController.kt              # GET /sequence, POST /sequences
 │   ├── SequencePlotController.kt        # GET/POST /sequence/plot
+│   ├── InteractiveSequencePlotController.kt # GET /sequence/plot/3d
 │   ├── MultivariateRandomController.kt  # POST /multivariate
 │   ├── CopulaRandomController.kt        # POST /copula
 │   ├── DistributionController.kt        # GET /distributions[/multivariate]
@@ -622,6 +654,9 @@ src/main/kotlin/htt/pseudorandomometricsequencesapi/
 │   ├── copula/                          # copula models
 │   └── visualization/                   # Java2D PNG renderer
 └── handler/GlobalExceptionHandler.kt    # 400/404/500 JSON
+
+src/main/resources/static/
+└── sequence-plot-3d.html                # self-contained interactive viewer
 ```
 
 Request flow: controller → service → `DistributionFactory`/`MultivariateDistributionFactory` →

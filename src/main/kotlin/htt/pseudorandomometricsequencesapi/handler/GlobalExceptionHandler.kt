@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.web.servlet.resource.NoResourceFoundException
@@ -50,6 +51,35 @@ class GlobalExceptionHandler {
         val errorDetails = ErrorDetails(
             timestamp = LocalDateTime.now(),
             message = ex.message ?: "Invalid request parameters provided.",
+            details = request.getDescription(false)
+        )
+
+        return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
+    }
+
+    /**
+     * Handles query parameters or path values that cannot be converted to the
+     * type declared by a controller method, such as `param1=abc` on an endpoint
+     * that expects a double.
+     *
+     * @param ex The [MethodArgumentTypeMismatchException] that was thrown.
+     * @param request The current [WebRequest] providing context about the request.
+     * @return A [ResponseEntity] containing [ErrorDetails] and an HTTP 400 status.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    @ResponseBody
+    fun handleMethodArgumentTypeMismatchException(
+        ex: MethodArgumentTypeMismatchException,
+        request: WebRequest
+    ): ResponseEntity<ErrorDetails> {
+
+        val expectedType = ex.requiredType?.simpleName ?: "value"
+        logger.warn("BAD REQUEST (400) in {}. Invalid value '{}' for parameter '{}'.",
+            request.getDescription(false), ex.value, ex.name)
+
+        val errorDetails = ErrorDetails(
+            timestamp = LocalDateTime.now(),
+            message = "Invalid value '${ex.value}' for parameter '${ex.name}'. Expected $expectedType.",
             details = request.getDescription(false)
         )
 

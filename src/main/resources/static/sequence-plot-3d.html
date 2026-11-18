@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive 3D Distribution Viewer · PseudorandomometricSequencesApi</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050912;
+      --surface: rgba(12, 19, 34, 0.86);
+      --surface-strong: rgba(9, 15, 28, 0.96);
+      --surface-soft: rgba(15, 23, 42, 0.58);
+      --border: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.28);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --muted-strong: #cbd5e1;
+      --accent: #22d3ee;
+      --accent-soft: rgba(34, 211, 238, 0.16);
+      --violet: #8b5cf6;
+      --danger: #f87171;
+      --success: #34d399;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+      --radius: 16px;
+      --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.18), transparent 32%),
+        radial-gradient(circle at 86% 12%, rgba(139, 92, 246, 0.13), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(34, 211, 238, 0.07), transparent 40%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      height: 100vh;
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px 22px 22px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(9, 15, 28, 0.94), rgba(8, 13, 24, 0.82));
+      border-right: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 45%, #8b5cf6 100%);
+      box-shadow: 0 12px 28px rgba(34, 211, 238, 0.22);
+      color: #03111f;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-copy h1 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-copy p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-soft);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field > label,
+    .field-label {
+      color: var(--muted-strong);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .param-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-width: 0;
+      padding: 10px 11px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      outline: none;
+      background: rgba(2, 6, 23, 0.66);
+      color: var(--text);
+      transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    input:hover,
+    select:hover {
+      border-color: rgba(148, 163, 184, 0.42);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(34, 211, 238, 0.72);
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.11);
+      background: rgba(2, 6, 23, 0.86);
+    }
+
+    input::placeholder {
+      color: rgba(148, 163, 184, 0.55);
+    }
+
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 16px) calc(50% - 2px),
+        calc(100% - 11px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 32px;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 46px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      height: 6px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      appearance: none;
+      background: linear-gradient(90deg, rgba(34, 211, 238, 0.9), rgba(139, 92, 246, 0.9));
+      box-shadow: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      border: 2px solid #07101d;
+      border-radius: 50%;
+      background: #e0faff;
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border: 2px solid #07101d;
+      border-radius: 50%;
+      background: #e0faff;
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22);
+    }
+
+    .range-value {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+    }
+
+    .hint {
+      min-height: 2.6em;
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+
+    .hint strong {
+      color: var(--muted-strong);
+      font-weight: 600;
+    }
+
+    .primary,
+    .secondary,
+    .chip {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, border-color 120ms ease,
+        background 120ms ease, color 120ms ease;
+      user-select: none;
+    }
+
+    .primary {
+      width: 100%;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #22d3ee, #3b82f6 55%, #8b5cf6);
+      color: #03111f;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      box-shadow: 0 14px 32px rgba(34, 211, 238, 0.18);
+    }
+
+    .primary:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .primary:active {
+      transform: translateY(0);
+    }
+
+    .primary[disabled] {
+      cursor: wait;
+      filter: saturate(0.5) brightness(0.9);
+      transform: none;
+    }
+
+    .secondary {
+      padding: 8px 11px;
+      background: rgba(15, 23, 42, 0.68);
+      border-color: var(--border);
+      color: var(--muted-strong);
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    .secondary:hover {
+      border-color: rgba(34, 211, 238, 0.4);
+      color: var(--text);
+      background: rgba(22, 35, 58, 0.9);
+    }
+
+    .secondary.active {
+      border-color: rgba(34, 211, 238, 0.48);
+      background: var(--accent-soft);
+      color: #a5f3fc;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      padding: 6px 9px;
+      background: rgba(15, 23, 42, 0.55);
+      border-color: var(--border);
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .chip:hover {
+      border-color: rgba(139, 92, 246, 0.46);
+      background: rgba(139, 92, 246, 0.12);
+      color: #ddd6fe;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 4px;
+      color: rgba(148, 163, 184, 0.72);
+      font-size: 0.68rem;
+      line-height: 1.5;
+    }
+
+    .sidebar-footer code {
+      color: rgba(165, 243, 252, 0.82);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+    }
+
+    .stage {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+      min-height: 0;
+      padding: 22px 24px 20px;
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .stage-title {
+      min-width: 0;
+    }
+
+    .stage-title h2 {
+      margin: 0;
+      overflow: hidden;
+      font-size: 1.28rem;
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stage-title p {
+      margin: 6px 0 0;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 320px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #060b16;
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    #chart {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #chart.dragging {
+      cursor: grabbing;
+    }
+
+    .overlay-help {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      padding: 7px 11px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 999px;
+      background: rgba(5, 9, 18, 0.66);
+      color: rgba(148, 163, 184, 0.9);
+      font-size: 0.7rem;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      pointer-events: none;
+      transform: translateX(-50%);
+      backdrop-filter: blur(10px);
+    }
+
+    .legend {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 128px;
+      padding: 9px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 11px;
+      background: rgba(5, 9, 18, 0.62);
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .legend > span:first-child {
+      color: var(--muted-strong);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .legend-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #440154, #482475, #3e4a89, #31688e, #26828e,
+        #1f9e89, #35b779, #6dcd59, #b4de2c, #fde725);
+    }
+
+    .legend-range {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.6rem;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 148px;
+      padding: 8px 10px;
+      border: 1px solid rgba(34, 211, 238, 0.32);
+      border-radius: 10px;
+      background: rgba(2, 6, 23, 0.94);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5);
+      font-size: 0.72rem;
+      line-height: 1.35;
+      pointer-events: none;
+      transform: translate(-50%, -125%);
+      backdrop-filter: blur(10px);
+    }
+
+    .tooltip-label {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .tooltip-value {
+      color: #67e8f9;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+    }
+
+    .tooltip-muted {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+    }
+
+    .loading,
+    .error {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      background: rgba(5, 9, 18, 0.62);
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-card {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 13px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-strong);
+      color: var(--muted-strong);
+      font-size: 0.82rem;
+      box-shadow: var(--shadow);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(34, 211, 238, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 720ms linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: min(420px, calc(100% - 40px));
+      padding: 16px 18px;
+      border: 1px solid rgba(248, 113, 113, 0.34);
+      border-radius: 12px;
+      background: rgba(35, 10, 18, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .error-card strong {
+      color: #fecaca;
+      font-size: 0.86rem;
+    }
+
+    .error-card span {
+      color: #fca5a5;
+      font-size: 0.76rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .error-card button {
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(10, 17, 30, 0.58);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      margin-top: 3px;
+      overflow: hidden;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(540px, 1fr);
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        max-height: none;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .stage {
+        min-height: 620px;
+      }
+
+      .canvas-wrap {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .sidebar {
+        padding: 18px 15px;
+      }
+
+      .stage {
+        min-height: 560px;
+        padding: 16px 14px;
+      }
+
+      .stage-header {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .overlay-help {
+        display: none;
+      }
+
+      .legend {
+        width: 108px;
+      }
+
+      .stage-title h2 {
+        font-size: 1.12rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">3D</div>
+        <div class="brand-copy">
+          <h1>Interactive Distribution Viewer</h1>
+          <p>PseudorandomometricSequencesApi</p>
+        </div>
+      </div>
+
+      <form id="controls" class="panel" autocomplete="off">
+        <div class="field">
+          <label for="distribution">Distribution</label>
+          <input id="distribution" name="distribution" type="text" list="distribution-list"
+            placeholder="gaussian" spellcheck="false" />
+          <datalist id="distribution-list"></datalist>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Parameters</span>
+          <div class="param-grid">
+            <input id="param1" name="param1" type="number" step="any" placeholder="param1"
+              aria-label="param1" />
+            <input id="param2" name="param2" type="number" step="any" placeholder="param2"
+              aria-label="param2" />
+            <input id="param3" name="param3" type="number" step="any" placeholder="param3"
+              aria-label="param3" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="count">Samples</label>
+            <input id="count" name="count" type="number" min="1" max="200000" step="1"
+              value="20000" />
+          </div>
+          <div class="field">
+            <label for="type">RNG</label>
+            <select id="type" name="type">
+              <option value="general">general</option>
+              <option value="secure">secure</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="seed">Seed</label>
+            <input id="seed" name="seed" type="text" inputmode="numeric" placeholder="auto"
+              value="42" />
+          </div>
+          <div class="field">
+            <label for="bins">Bins</label>
+            <div class="range-row">
+              <input id="bins" name="bins" type="range" min="8" max="120" step="1" value="64" />
+              <span class="range-value" id="bins-value">64</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="render" class="primary" type="submit">Render 3D view</button>
+      </form>
+
+      <div class="field">
+        <span class="field-label">Quick presets</span>
+        <div class="presets">
+          <button class="chip" type="button" data-preset="gaussian">Gaussian</button>
+          <button class="chip" type="button" data-preset="uniform">Uniform</button>
+          <button class="chip" type="button" data-preset="exponential">Exponential</button>
+          <button class="chip" type="button" data-preset="beta">Beta</button>
+          <button class="chip" type="button" data-preset="poisson">Poisson</button>
+          <button class="chip" type="button" data-preset="lognormal">Lognormal</button>
+        </div>
+      </div>
+
+      <div class="hint" id="distribution-hint">
+        Choose any of the 81 univariate distributions exposed by the API.
+      </div>
+
+      <div class="sidebar-footer">
+        The viewer requests data from
+        <code>GET /api/v1/random/sequence</code> and renders it locally with Canvas 2D.
+        No WebGL or third-party library is required.
+      </div>
+    </aside>
+
+    <main class="stage">
+      <header class="stage-header">
+        <div class="stage-title">
+          <h2 id="chart-title">Gaussian Distribution</h2>
+          <p id="chart-subtitle">gaussian · 20,000 samples · seed 42</p>
+        </div>
+        <div class="actions">
+          <button id="auto-rotate" class="secondary active" type="button" aria-pressed="true">
+            Auto-rotate
+          </button>
+          <button id="reset-view" class="secondary" type="button">Reset view</button>
+          <button id="copy-link" class="secondary" type="button">Copy link</button>
+        </div>
+      </header>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="chart" tabindex="0" aria-label="Interactive 3D distribution plot"></canvas>
+
+        <div class="legend" aria-hidden="true">
+          <span>Density</span>
+          <div class="legend-bar"></div>
+          <div class="legend-range">
+            <span>0</span>
+            <span id="legend-max">max</span>
+          </div>
+        </div>
+
+        <div class="overlay-help">Drag to rotate · Wheel to zoom · Double-click to reset</div>
+
+        <div class="tooltip hidden" id="tooltip"></div>
+
+        <div class="loading hidden" id="loading">
+          <div class="loading-card">
+            <div class="spinner"></div>
+            <span>Generating sequence…</span>
+          </div>
+        </div>
+
+        <div class="error hidden" id="error">
+          <div class="error-card">
+            <strong>Could not render the distribution</strong>
+            <span id="error-message"></span>
+            <button id="error-retry" class="secondary" type="button">Try again</button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="stats" id="stats">
+        <div class="stat">
+          <div class="stat-label">Samples</div>
+          <div class="stat-value" id="stat-samples">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Mean</div>
+          <div class="stat-value" id="stat-mean">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Std. deviation</div>
+          <div class="stat-value" id="stat-sd">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Bins</div>
+          <div class="stat-value" id="stat-bins">—</div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = (id) => document.getElementById(id);
+
+      const PRESETS = {
+        gaussian: { param1: '0', param2: '1', param3: '' },
+        uniform: { param1: '0', param2: '1', param3: '' },
+        exponential: { param1: '2', param2: '', param3: '' },
+        beta: { param1: '2', param2: '5', param3: '' },
+        poisson: { param1: '3', param2: '', param3: '' },
+        lognormal: { param1: '0', param2: '0.5', param3: '' },
+      };
+
+      const VIRIDIS_STOPS = [
+        [68, 1, 84],
+        [72, 40, 120],
+        [62, 74, 137],
+        [49, 104, 142],
+        [38, 130, 142],
+        [31, 158, 137],
+        [53, 183, 121],
+        [109, 205, 89],
+        [180, 222, 44],
+        [253, 231, 37],
+      ];
+
+      const TAU = Math.PI * 2;
+      const DEFAULT_VIEW = { yaw: 0.72, pitch: 0.56, zoom: 1 };
+      const MAX_CLIENT_SAMPLES = 200000;
+
+      const state = {
+        view: { ...DEFAULT_VIEW },
+        autoRotate: true,
+        dragging: false,
+        pointerId: null,
+        lastPointer: { x: 0, y: 0 },
+        lastInteraction: performance.now() - 3000,
+        hoveredBin: -1,
+        plot: null,
+        bars: [],
+        screenBars: [],
+        width: 0,
+        height: 0,
+        baseScale: 1,
+        originX: 0,
+        originY: 0,
+        catalog: new Map(),
+        loading: false,
+        lastDistribution: '',
+      };
+
+      const canvas = $('chart');
+      const context = canvas.getContext('2d');
+      const wrap = $('canvas-wrap');
+      const tooltip = $('tooltip');
+
+      function clamp(value, minimum, maximum) {
+        return Math.min(maximum, Math.max(minimum, value));
+      }
+
+      function formatNumber(value) {
+        if (!Number.isFinite(value)) return '—';
+        const magnitude = Math.abs(value);
+        if (magnitude === 0) return '0';
+        if (magnitude >= 10000 || magnitude < 0.001) return value.toExponential(2);
+        if (magnitude >= 100) return value.toFixed(0);
+        if (magnitude >= 1) return value.toFixed(2);
+        return value.toFixed(3);
+      }
+
+      function formatDensity(value) {
+        if (!Number.isFinite(value)) return '—';
+        if (value === 0) return '0';
+        const magnitude = Math.abs(value);
+        if (magnitude >= 100) return value.toFixed(0);
+        if (magnitude >= 1) return value.toFixed(2);
+        return value.toFixed(3);
+      }
+
+      function prettyDistribution(name) {
+        const special = { gev: 'GEV', f: 'F', t: 'T' };
+        return name
+          .split(/[-_ ]+/)
+          .filter(Boolean)
+          .map((part) => special[part.toLowerCase()] || part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ') || 'Sequence';
+      }
+
+      function viridis(fraction, shade = 1, alpha = 1) {
+        const position = clamp(fraction, 0, 1) * (VIRIDIS_STOPS.length - 1);
+        const lower = Math.min(Math.floor(position), VIRIDIS_STOPS.length - 1);
+        const upper = Math.min(lower + 1, VIRIDIS_STOPS.length - 1);
+        const mix = position - lower;
+        const from = VIRIDIS_STOPS[lower];
+        const to = VIRIDIS_STOPS[upper];
+        const channels = [0, 1, 2].map((channel) =>
+          Math.round((from[channel] + (to[channel] - from[channel]) * mix) * shade)
+        );
+        return `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${alpha})`;
+      }
+
+      function quantileSorted(sorted, probability) {
+        if (sorted.length === 1) return sorted[0];
+        const position = clamp(probability, 0, 1) * (sorted.length - 1);
+        const lower = Math.floor(position);
+        const upper = Math.min(lower + 1, sorted.length - 1);
+        const fraction = position - lower;
+        return sorted[lower] * (1 - fraction) + sorted[upper] * fraction;
+      }
+
+      function gaussianSmooth(values, sigma) {
+        if (sigma <= 0 || values.length === 0) return values.slice();
+        const radius = Math.max(1, Math.ceil(3 * sigma));
+        const kernel = [];
+        let kernelSum = 0;
+        for (let offset = -radius; offset <= radius; offset += 1) {
+          const weight = Math.exp(-0.5 * Math.pow(offset / sigma, 2));
+          kernel.push(weight);
+          kernelSum += weight;
+        }
+        return values.map((_, index) => {
+          let total = 0;
+          for (let offset = -radius; offset <= radius; offset += 1) {
+            const source = index + offset;
+            if (source >= 0 && source < values.length) {
+              total += values[source] * kernel[offset + radius];
+            }
+          }
+          return total / kernelSum;
+        });
+      }
+
+      function preparePlot(values, requestedBins) {
+        const sorted = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+        if (sorted.length === 0) {
+          throw new Error('The server returned a sequence without finite values.');
+        }
+
+        const minimum = sorted[0];
+        const maximum = sorted[sorted.length - 1];
+        const isDiscrete =
+          maximum - minimum <= 80 &&
+          sorted.every((value) => Math.abs(value - Math.round(value)) < 1e-9);
+
+        let lo;
+        let hi;
+        let density;
+        let labels;
+
+        if (isDiscrete) {
+          const minValue = Math.round(minimum);
+          const maxValue = Math.round(maximum);
+          const support = maxValue - minValue + 1;
+          const counts = new Array(support).fill(0);
+          let inside = 0;
+          for (const value of sorted) {
+            const index = Math.round(value) - minValue;
+            if (index >= 0 && index < support) {
+              counts[index] += 1;
+              inside += 1;
+            }
+          }
+          const total = Math.max(inside, 1);
+          density = counts.map((count) => count / total);
+          labels = new Array(support).fill(0).map((_, index) => String(minValue + index));
+          lo = minValue - 0.5;
+          hi = maxValue + 0.5;
+        } else {
+          lo = quantileSorted(sorted, 0.005);
+          hi = quantileSorted(sorted, 0.995);
+          if (!(hi > lo)) {
+            const padding = Math.max(0.5, Math.abs(lo) * 0.05);
+            lo -= padding;
+            hi += padding;
+          }
+
+          const span = hi - lo;
+          const binWidth = span / requestedBins;
+          const counts = new Array(requestedBins).fill(0);
+          let inside = 0;
+          for (const value of sorted) {
+            if (value < lo || value > hi) continue;
+            const index = clamp(Math.floor(((value - lo) / span) * requestedBins), 0, requestedBins - 1);
+            counts[index] += 1;
+            inside += 1;
+          }
+          const effectiveCount = Math.max(inside, 1);
+          const smoothed = gaussianSmooth(counts, 1.15);
+          density = smoothed.map((count) => count / (effectiveCount * binWidth));
+          labels = new Array(requestedBins)
+            .fill(0)
+            .map((_, index) => formatNumber(lo + (index + 0.5) * binWidth));
+        }
+
+        const maxDensity = Math.max(...density, 1e-12);
+
+        let sum = 0;
+        for (const value of sorted) sum += value;
+        const mean = sum / sorted.length;
+
+        let squaredDeviations = 0;
+        for (const value of sorted) squaredDeviations += (value - mean) * (value - mean);
+        const standardDeviation = Math.sqrt(squaredDeviations / sorted.length);
+
+        return {
+          density,
+          maxDensity,
+          lo,
+          hi,
+          labels,
+          isDiscrete,
+          mean,
+          standardDeviation,
+          sampleCount: sorted.length,
+          values: sorted,
+        };
+      }
+
+      function buildBars(plot) {
+        const count = plot.density.length;
+        const left = -0.64;
+        const right = 0.64;
+        const slot = (right - left) / count;
+        const gapRatio = count > 90 ? 0.05 : count > 48 ? 0.12 : 0.2;
+        const gap = slot * gapRatio;
+        const depthFront = -0.24;
+        const depthBack = 0.24;
+
+        return plot.density
+          .map((density, index) => {
+            const ratio = clamp(density / plot.maxDensity, 0, 1);
+            return {
+              index,
+              x0: left + index * slot + gap / 2,
+              x1: left + (index + 1) * slot - gap / 2,
+              y0: depthFront,
+              y1: depthBack,
+              z0: 0,
+              z1: Math.max(0.004, ratio * 0.95),
+              ratio,
+              density,
+              label: plot.labels[index],
+            };
+          })
+          .filter((bar) => bar.ratio > 0.0001);
+      }
+
+      function resizeCanvas() {
+        const rect = wrap.getBoundingClientRect();
+        const width = Math.max(320, rect.width);
+        const height = Math.max(280, rect.height);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = width;
+        state.height = height;
+        canvas.width = Math.floor(width * pixelRatio);
+        canvas.height = Math.floor(height * pixelRatio);
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      }
+
+      function projectWorld(x, y, z) {
+        const cosYaw = Math.cos(state.view.yaw);
+        const sinYaw = Math.sin(state.view.yaw);
+        const cosPitch = Math.cos(state.view.pitch);
+        const sinPitch = Math.sin(state.view.pitch);
+
+        const rotatedX = x * cosYaw - y * sinYaw;
+        const rotatedY = x * sinYaw + y * cosYaw;
+        const depth = rotatedY * cosPitch - z * sinPitch;
+        const perspective = 1.9 / (1.9 + depth * 0.55);
+
+        return {
+          x: state.originX + rotatedX * state.baseScale * perspective,
+          y: state.originY - (rotatedY * sinPitch + z * cosPitch) * state.baseScale * perspective,
+          depth,
+          perspective,
+        };
+      }
+
+      function drawBackground() {
+        const width = state.width;
+        const height = state.height;
+
+        context.clearRect(0, 0, width, height);
+
+        const background = context.createLinearGradient(0, 0, 0, height);
+        background.addColorStop(0, '#070b16');
+        background.addColorStop(1, '#0b1324');
+        context.fillStyle = background;
+        context.fillRect(0, 0, width, height);
+
+        const firstGlow = context.createRadialGradient(
+          width * 0.16, height * 0.06, 0,
+          width * 0.16, height * 0.06, Math.max(width, height) * 0.62
+        );
+        firstGlow.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
+        firstGlow.addColorStop(1, 'rgba(37, 99, 235, 0)');
+        context.fillStyle = firstGlow;
+        context.fillRect(0, 0, width, height);
+
+        const secondGlow = context.createRadialGradient(
+          width * 0.88, height * 0.18, 0,
+          width * 0.88, height * 0.18, Math.max(width, height) * 0.5
+        );
+        secondGlow.addColorStop(0, 'rgba(139, 92, 246, 0.13)');
+        secondGlow.addColorStop(1, 'rgba(139, 92, 246, 0)');
+        context.fillStyle = secondGlow;
+        context.fillRect(0, 0, width, height);
+      }
+
+      function drawFloor() {
+        const left = -0.68;
+        const right = 0.68;
+        const front = -0.34;
+        const back = 0.34;
+
+        const corners = [
+          projectWorld(left, front, 0),
+          projectWorld(right, front, 0),
+          projectWorld(right, back, 0),
+          projectWorld(left, back, 0),
+        ];
+
+        context.beginPath();
+        context.moveTo(corners[0].x, corners[0].y);
+        for (let index = 1; index < corners.length; index += 1) {
+          context.lineTo(corners[index].x, corners[index].y);
+        }
+        context.closePath();
+        context.fillStyle = 'rgba(9, 16, 30, 0.82)';
+        context.fill();
+
+        context.strokeStyle = 'rgba(100, 116, 139, 0.16)';
+        context.lineWidth = 1;
+        const xDivisions = 12;
+        for (let index = 0; index <= xDivisions; index += 1) {
+          const x = left + ((right - left) * index) / xDivisions;
+          const from = projectWorld(x, front, 0);
+          const to = projectWorld(x, back, 0);
+          context.beginPath();
+          context.moveTo(from.x, from.y);
+          context.lineTo(to.x, to.y);
+          context.stroke();
+        }
+
+        const yDivisions = 4;
+        for (let index = 0; index <= yDivisions; index += 1) {
+          const y = front + ((back - front) * index) / yDivisions;
+          const from = projectWorld(left, y, 0);
+          const to = projectWorld(right, y, 0);
+          context.beginPath();
+          context.moveTo(from.x, from.y);
+          context.lineTo(to.x, to.y);
+          context.stroke();
+        }
+
+        context.strokeStyle = 'rgba(100, 116, 139, 0.46)';
+        context.lineWidth = 1.2;
+        context.beginPath();
+        context.moveTo(corners[0].x, corners[0].y);
+        for (let index = 1; index < corners.length; index += 1) {
+          context.lineTo(corners[index].x, corners[index].y);
+        }
+        context.closePath();
+        context.stroke();
+      }
+
+      function drawSampleCloud(plot) {
+        if (plot.values.length === 0) return;
+
+        const maximumPoints = 1800;
+        const step = Math.max(1, Math.floor(plot.values.length / maximumPoints));
+        const span = plot.hi - plot.lo || 1;
+
+        context.fillStyle = 'rgba(226, 232, 240, 0.24)';
+        for (let index = 0; index < plot.values.length; index += step) {
+          const fraction = (plot.values[index] - plot.lo) / span;
+          if (fraction < 0 || fraction > 1) continue;
+
+          const x = -0.64 + fraction * 1.28;
+          // A deterministic pseudo-random depth keeps the cloud stable between frames.
+          const y = -0.24 + (((index * 9301 + 49297) % 233280) / 233280) * 0.48;
+          const point = projectWorld(x, y, 0.002);
+          context.fillRect(point.x - 0.9, point.y - 0.9, 1.8, 1.8);
+        }
+      }
+
+      function makeFace(points, shade, ratio, binIndex, kind) {
+        const projected = points.map(([x, y, z]) => projectWorld(x, y, z));
+        const depth = projected.reduce((total, point) => total + point.depth, 0) / projected.length;
+        const hovered = state.hoveredBin === binIndex;
+        return {
+          points: projected,
+          depth,
+          fill: viridis(ratio, hovered ? Math.min(1.25, shade * 1.18) : shade, kind === 'top' ? 0.98 : 0.92),
+          stroke: hovered ? 'rgba(255, 255, 255, 0.72)' : 'rgba(5, 9, 17, 0.32)',
+        };
+      }
+
+      function drawBars(bars) {
+        const faces = [];
+
+        for (const bar of bars) {
+          const { x0, x1, y0, y1, z0, z1, ratio, index } = bar;
+          const top = [
+            [x0, y0, z1],
+            [x1, y0, z1],
+            [x1, y1, z1],
+            [x0, y1, z1],
+          ];
+          const front = [
+            [x0, y0, z0],
+            [x1, y0, z0],
+            [x1, y0, z1],
+            [x0, y0, z1],
+          ];
+          const back = [
+            [x0, y1, z0],
+            [x1, y1, z0],
+            [x1, y1, z1],
+            [x0, y1, z1],
+          ];
+          const right = [
+            [x1, y0, z0],
+            [x1, y1, z0],
+            [x1, y1, z1],
+            [x1, y0, z1],
+          ];
+          const left = [
+            [x0, y0, z0],
+            [x0, y1, z0],
+            [x0, y1, z1],
+            [x0, y0, z1],
+          ];
+
+          faces.push(makeFace(top, 1.0, ratio, index, 'top'));
+          faces.push(makeFace(front, 0.78, ratio, index, 'side'));
+          faces.push(makeFace(back, 0.48, ratio, index, 'side'));
+          faces.push(makeFace(right, 0.6, ratio, index, 'side'));
+          faces.push(makeFace(left, 0.5, ratio, index, 'side'));
+        }
+
+        // Painter's algorithm: draw the farthest faces first.
+        faces.sort((a, b) => b.depth - a.depth);
+
+        for (const face of faces) {
+          context.beginPath();
+          context.moveTo(face.points[0].x, face.points[0].y);
+          for (let index = 1; index < face.points.length; index += 1) {
+            context.lineTo(face.points[index].x, face.points[index].y);
+          }
+          context.closePath();
+          context.fillStyle = face.fill;
+          context.fill();
+          context.strokeStyle = face.stroke;
+          context.lineWidth = 0.7;
+          context.stroke();
+        }
+
+        const anchors = [];
+        for (const bar of bars) {
+          const centerX = (bar.x0 + bar.x1) / 2;
+          const centerY = (bar.y0 + bar.y1) / 2;
+          const top = projectWorld(centerX, centerY, bar.z1);
+          const front = projectWorld(centerX, bar.y0, bar.z1 * 0.55);
+          anchors.push({ index: bar.index, x: top.x, y: top.y });
+          anchors.push({ index: bar.index, x: front.x, y: front.y });
+        }
+        state.screenBars = anchors;
+      }
+
+      function drawAxes(plot) {
+        const fontFamily = getComputedStyle(document.body).fontFamily;
+        const frontEdge = -0.44;
+
+        context.font = `11px ${fontFamily}`;
+        context.textAlign = 'center';
+        context.textBaseline = 'top';
+        context.fillStyle = 'rgba(148, 163, 184, 0.95)';
+
+        const tickCount = 6;
+
+        if (plot.isDiscrete) {
+          const step = Math.max(1, Math.ceil(plot.density.length / 7));
+          for (let index = 0; index < plot.density.length; index += step) {
+            const x = -0.64 + ((index + 0.5) / plot.density.length) * 1.28;
+            const point = projectWorld(x, frontEdge, 0);
+
+            context.strokeStyle = 'rgba(148, 163, 184, 0.42)';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+            context.lineTo(point.x, point.y + 6);
+            context.stroke();
+
+            context.fillText(plot.labels[index], point.x, point.y + 10);
+          }
+        } else {
+          for (let index = 0; index <= tickCount; index += 1) {
+            const fraction = index / tickCount;
+            const x = -0.64 + fraction * 1.28;
+            const point = projectWorld(x, frontEdge, 0);
+            const value = plot.lo + (plot.hi - plot.lo) * fraction;
+
+            context.strokeStyle = 'rgba(148, 163, 184, 0.42)';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+            context.lineTo(point.x, point.y + 6);
+            context.stroke();
+
+            context.fillText(formatNumber(value), point.x, point.y + 10);
+          }
+        }
+
+        context.textAlign = 'right';
+        context.textBaseline = 'middle';
+        context.fillStyle = 'rgba(148, 163, 184, 0.9)';
+        const zLevels = 4;
+        const topDensity = plot.maxDensity;
+
+        for (let index = 0; index <= zLevels; index += 1) {
+          const ratio = index / zLevels;
+          const point = projectWorld(-0.68, 0.34, ratio * 0.95);
+
+          context.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+          context.lineWidth = 1;
+          context.beginPath();
+          context.moveTo(point.x - 4, point.y);
+          context.lineTo(point.x, point.y);
+          context.stroke();
+
+          context.fillText(formatDensity(topDensity * ratio), point.x - 8, point.y);
+        }
+
+        context.strokeStyle = 'rgba(100, 116, 139, 0.42)';
+        context.lineWidth = 1;
+        const topBack = projectWorld(-0.68, 0.34, 0.95);
+        const bottomBack = projectWorld(-0.68, 0.34, 0);
+        context.beginPath();
+        context.moveTo(bottomBack.x, bottomBack.y);
+        context.lineTo(topBack.x, topBack.y);
+        context.stroke();
+
+        context.font = `600 12px ${fontFamily}`;
+        context.fillStyle = 'rgba(203, 213, 225, 0.9)';
+        context.textAlign = 'center';
+        context.textBaseline = 'top';
+        const valueTitle = projectWorld(0, -0.55, 0);
+        context.fillText('Value', valueTitle.x, valueTitle.y + 22);
+
+        context.save();
+        context.translate(topBack.x - 48, (topBack.y + bottomBack.y) / 2);
+        context.rotate(-Math.PI / 2);
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText('Density', 0, 0);
+        context.restore();
+      }
+
+      function drawScene() {
+        if (state.width === 0 || state.height === 0) resizeCanvas();
+
+        drawBackground();
+
+        if (!state.plot) return;
+
+        state.baseScale =
+          Math.min(state.width * 0.36, state.height * 0.58) * state.view.zoom;
+        state.originX = state.width / 2;
+        state.originY = state.height * 0.64;
+
+        drawFloor();
+        drawSampleCloud(state.plot);
+        drawBars(state.bars);
+        drawAxes(state.plot);
+      }
+
+      function updateTooltip(index, mouseX, mouseY) {
+        const bar = state.bars.find((candidate) => candidate.index === index);
+        const plot = state.plot;
+        if (!bar || !plot) return;
+
+        const binWidth = (plot.hi - plot.lo) / plot.density.length;
+        const rangeLabel = plot.isDiscrete
+          ? `Value ${bar.label}`
+          : `${formatNumber(plot.lo + bar.index * binWidth)} – ${formatNumber(plot.lo + (bar.index + 1) * binWidth)}`;
+        const densityLabel = plot.isDiscrete ? 'Probability' : 'Density';
+        const mass = plot.isDiscrete ? bar.density * 100 : bar.density * binWidth * 100;
+
+        tooltip.innerHTML =
+          `<span class="tooltip-label">${rangeLabel}</span>` +
+          `<span class="tooltip-value">${densityLabel} ${formatDensity(bar.density)}</span>` +
+          `<span class="tooltip-muted">${plot.isDiscrete ? 'Share' : 'Mass'} ${mass.toFixed(1)}%</span>`;
+        tooltip.style.left = `${mouseX}px`;
+        tooltip.style.top = `${mouseY}px`;
+        tooltip.classList.remove('hidden');
+      }
+
+      function hideTooltip() {
+        tooltip.classList.add('hidden');
+      }
+
+      function updateHover(event) {
+        if (state.dragging || state.screenBars.length === 0) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        let nearestIndex = -1;
+        let nearestDistance = 28 * 28;
+
+        for (const bar of state.screenBars) {
+          const dx = mouseX - bar.x;
+          const dy = mouseY - bar.y;
+          const distance = dx * dx + dy * dy;
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = bar.index;
+          }
+        }
+
+        if (nearestIndex !== state.hoveredBin) {
+          state.hoveredBin = nearestIndex;
+        }
+
+        if (nearestIndex >= 0) {
+          updateTooltip(nearestIndex, mouseX, mouseY);
+        } else {
+          hideTooltip();
+        }
+      }
+
+      function animate(timestamp) {
+        const delta = Math.min(64, timestamp - (state.lastFrameTime || timestamp));
+        state.lastFrameTime = timestamp;
+
+        if (
+          state.autoRotate &&
+          !state.dragging &&
+          state.hoveredBin < 0 &&
+          timestamp - state.lastInteraction > 2200
+        ) {
+          state.view.yaw = (state.view.yaw + delta * 0.00032) % TAU;
+        }
+
+        drawScene();
+        requestAnimationFrame(animate);
+      }
+
+      function readForm() {
+        const countValue = parseInt($('count').value, 10);
+        return {
+          distribution: $('distribution').value.trim() || 'gaussian',
+          type: $('type').value,
+          param1: $('param1').value.trim(),
+          param2: $('param2').value.trim(),
+          param3: $('param3').value.trim(),
+          count: clamp(Number.isFinite(countValue) ? countValue : 20000, 1, MAX_CLIENT_SAMPLES),
+          seed: $('seed').value.trim(),
+          bins: clamp(parseInt($('bins').value, 10) || 64, 8, 200),
+        };
+      }
+
+      function buildApiUrl(params) {
+        const url = new URL('/api/v1/random/sequence', window.location.origin);
+        url.searchParams.set('count', String(params.count));
+        url.searchParams.set('type', params.type);
+        url.searchParams.set('distribution', params.distribution);
+        if (params.param1 !== '') url.searchParams.set('param1', params.param1);
+        if (params.param2 !== '') url.searchParams.set('param2', params.param2);
+        if (params.param3 !== '') url.searchParams.set('param3', params.param3);
+        if (params.seed !== '') url.searchParams.set('seed', params.seed);
+        return url;
+      }
+
+      function syncPageUrl(params) {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.searchParams.set('distribution', params.distribution);
+        if (params.param1 !== '') url.searchParams.set('param1', params.param1);
+        if (params.param2 !== '') url.searchParams.set('param2', params.param2);
+        if (params.param3 !== '') url.searchParams.set('param3', params.param3);
+        url.searchParams.set('count', String(params.count));
+        url.searchParams.set('type', params.type);
+        url.searchParams.set('bins', String(params.bins));
+        if (params.seed !== '') url.searchParams.set('seed', params.seed);
+        window.history.replaceState(null, '', url);
+      }
+
+      function setLoading(loading) {
+        state.loading = loading;
+        $('loading').classList.toggle('hidden', !loading);
+        $('render').disabled = loading;
+        $('render').textContent = loading ? 'Rendering…' : 'Render 3D view';
+      }
+
+      function showError(message) {
+        $('error-message').textContent = message;
+        $('error').classList.remove('hidden');
+      }
+
+      function hideError() {
+        $('error').classList.add('hidden');
+      }
+
+      function updateSummary(payload, plot, params) {
+        const parameterBits = [
+          params.param1 !== '' ? `param1=${params.param1}` : null,
+          params.param2 !== '' ? `param2=${params.param2}` : null,
+          params.param3 !== '' ? `param3=${params.param3}` : null,
+        ].filter(Boolean);
+
+        $('chart-title').textContent = `${prettyDistribution(payload.distribution)} Distribution`;
+        $('chart-subtitle').textContent =
+          `${payload.distribution}${parameterBits.length ? ` · ${parameterBits.join(' · ')}` : ''}` +
+          ` · ${payload.count.toLocaleString()} samples · seed ${payload.seed}`;
+        $('stat-samples').textContent = payload.count.toLocaleString();
+        $('stat-mean').textContent = formatNumber(plot.mean);
+        $('stat-sd').textContent = formatNumber(plot.standardDeviation);
+        $('stat-bins').textContent = String(plot.density.length);
+        $('legend-max').textContent = formatDensity(plot.maxDensity);
+      }
+
+      async function loadPlot() {
+        const params = readForm();
+        $('count').value = String(params.count);
+        $('bins').value = String(params.bins);
+        $('bins-value').textContent = String(params.bins);
+        syncPageUrl(params);
+        hideError();
+        setLoading(true);
+
+        try {
+          const response = await fetch(buildApiUrl(params), {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.message || `Request failed with HTTP ${response.status}.`);
+          }
+          if (!Array.isArray(payload.sequence)) {
+            throw new Error('The API response did not include a sequence.');
+          }
+
+          const plot = preparePlot(payload.sequence, params.bins);
+          state.plot = plot;
+          state.bars = buildBars(plot);
+          state.hoveredBin = -1;
+          hideTooltip();
+
+          if (params.seed === '' && payload.seed !== undefined && payload.seed !== null) {
+            $('seed').value = String(payload.seed);
+            syncPageUrl(readForm());
+          }
+
+          updateSummary(payload, plot, params);
+        } catch (error) {
+          state.plot = null;
+          state.bars = [];
+          state.screenBars = [];
+          showError(error instanceof Error ? error.message : String(error));
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function updateDistributionHint() {
+        const name = $('distribution').value.trim().toLowerCase();
+        const description = state.catalog.get(name);
+        $('distribution-hint').textContent = description
+          ? `${name} · ${description}`
+          : 'Choose any of the 81 univariate distributions exposed by the API.';
+      }
+
+      async function loadCatalog() {
+        try {
+          const response = await fetch('/api/v1/distributions', {
+            headers: { Accept: 'application/json' },
+          });
+          if (!response.ok) return;
+          const items = await response.json();
+          const datalist = $('distribution-list');
+          datalist.innerHTML = '';
+          state.catalog.clear();
+
+          for (const item of items) {
+            const option = document.createElement('option');
+            option.value = item.name;
+            option.label = item.description;
+            datalist.appendChild(option);
+            state.catalog.set(item.name, item.description);
+          }
+
+          updateDistributionHint();
+        } catch {
+          // The viewer still works with free-text distribution names.
+        }
+      }
+
+      function readUrlIntoForm() {
+        const query = new URLSearchParams(window.location.search);
+        const distribution = (query.get('distribution') || 'gaussian').trim().toLowerCase();
+        $('distribution').value = distribution;
+        // The Gaussian preset is shown by default; other distributions keep their
+        // server-side parameter defaults unless the query string overrides them.
+        $('param1').value = query.has('param1') ? query.get('param1') : (distribution === 'gaussian' ? '0' : '');
+        $('param2').value = query.has('param2') ? query.get('param2') : (distribution === 'gaussian' ? '1' : '');
+        $('param3').value = query.get('param3') || '';
+        $('count').value = query.get('count') || '20000';
+        $('type').value = query.get('type') || 'general';
+        $('seed').value = query.has('seed') ? query.get('seed') : '42';
+        $('bins').value = query.get('bins') || '64';
+        $('bins-value').textContent = $('bins').value;
+        state.lastDistribution = distribution;
+      }
+
+      function attachEvents() {
+        document.addEventListener('submit', (event) => {
+          if (event.target === $('controls')) {
+            event.preventDefault();
+            loadPlot();
+          }
+        });
+
+        $('bins').addEventListener('input', () => {
+          $('bins-value').textContent = $('bins').value;
+        });
+
+        $('distribution').addEventListener('input', updateDistributionHint);
+        $('distribution').addEventListener('change', () => {
+          const name = $('distribution').value.trim().toLowerCase();
+          if (name !== state.lastDistribution) {
+            state.lastDistribution = name;
+            // Parameters are positional and their meaning changes between
+            // distributions, so clear them instead of reusing stale values.
+            $('param1').value = name === 'gaussian' ? '0' : '';
+            $('param2').value = name === 'gaussian' ? '1' : '';
+            $('param3').value = '';
+          }
+          updateDistributionHint();
+        });
+
+        document.querySelectorAll('[data-preset]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const name = button.dataset.preset;
+            const preset = PRESETS[name];
+            if (!preset) return;
+            $('distribution').value = name;
+            $('param1').value = preset.param1;
+            $('param2').value = preset.param2;
+            $('param3').value = preset.param3;
+            state.lastDistribution = name;
+            updateDistributionHint();
+            loadPlot();
+          });
+        });
+
+        $('auto-rotate').addEventListener('click', () => {
+          state.autoRotate = !state.autoRotate;
+          $('auto-rotate').classList.toggle('active', state.autoRotate);
+          $('auto-rotate').setAttribute('aria-pressed', String(state.autoRotate));
+          state.lastInteraction = performance.now() - 3000;
+        });
+
+        $('reset-view').addEventListener('click', () => {
+          state.view = { ...DEFAULT_VIEW };
+          state.lastInteraction = performance.now();
+        });
+
+        $('copy-link').addEventListener('click', async () => {
+          const button = $('copy-link');
+          const original = button.textContent;
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            button.textContent = 'Copied!';
+          } catch {
+            button.textContent = 'Copy failed';
+          }
+          window.setTimeout(() => {
+            button.textContent = original;
+          }, 1400);
+        });
+
+        $('error-retry').addEventListener('click', () => loadPlot());
+
+        canvas.addEventListener('pointerdown', (event) => {
+          state.dragging = true;
+          state.pointerId = event.pointerId;
+          state.lastPointer.x = event.clientX;
+          state.lastPointer.y = event.clientY;
+          state.hoveredBin = -1;
+          state.lastInteraction = performance.now();
+          hideTooltip();
+          canvas.classList.add('dragging');
+          canvas.setPointerCapture(event.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (event) => {
+          if (state.dragging && event.pointerId === state.pointerId) {
+            const dx = event.clientX - state.lastPointer.x;
+            const dy = event.clientY - state.lastPointer.y;
+            state.lastPointer.x = event.clientX;
+            state.lastPointer.y = event.clientY;
+            state.view.yaw -= dx * 0.008;
+            state.view.pitch = clamp(state.view.pitch - dy * 0.006, 0.12, 1.35);
+            state.lastInteraction = performance.now();
+          } else {
+            state.lastInteraction = performance.now();
+            updateHover(event);
+          }
+        });
+
+        const endDrag = (event) => {
+          if (event.pointerId !== state.pointerId) return;
+          state.dragging = false;
+          state.pointerId = null;
+          state.lastInteraction = performance.now();
+          canvas.classList.remove('dragging');
+          if (canvas.hasPointerCapture(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+          }
+        };
+
+        canvas.addEventListener('pointerup', endDrag);
+        canvas.addEventListener('pointercancel', endDrag);
+
+        canvas.addEventListener('pointerleave', () => {
+          if (!state.dragging) {
+            state.hoveredBin = -1;
+            hideTooltip();
+          }
+        });
+
+        canvas.addEventListener(
+          'wheel',
+          (event) => {
+            event.preventDefault();
+            const factor = Math.exp(-event.deltaY * 0.001);
+            state.view.zoom = clamp(state.view.zoom * factor, 0.45, 2.6);
+            state.lastInteraction = performance.now();
+          },
+          { passive: false }
+        );
+
+        canvas.addEventListener('dblclick', () => {
+          state.view = { ...DEFAULT_VIEW };
+          state.lastInteraction = performance.now();
+        });
+
+        new ResizeObserver(() => resizeCanvas()).observe(wrap);
+      }
+
+      readUrlIntoForm();
+      attachEvents();
+      resizeCanvas();
+      loadCatalog();
+      loadPlot();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
