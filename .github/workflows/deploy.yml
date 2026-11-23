@@ -24,6 +24,9 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
+    env:
+      # Repo variable; fallback keeps the single-server homelab working.
+      DEPLOY_ROOT: ${{ vars.DEPLOY_ROOT || '/opt/compose' }}
 
     steps:
       - name: Checkout code
@@ -55,8 +58,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            mkdir -p /opt/pseudorandomometricsequencesapi/target
-            rm -f /opt/pseudorandomometricsequencesapi/target/*.jar
+            mkdir -p "${{ env.DEPLOY_ROOT }}/pseudorandomometricsequencesapi/target"
+            rm -f "${{ env.DEPLOY_ROOT }}/pseudorandomometricsequencesapi/target/"*.jar
             echo "¡Servidor limpio de JARs antiguos!"
 
       - name: Deploy project files via SCP
@@ -67,7 +70,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "target/, Dockerfile, docker-compose.yml"
-          target: "/opt/pseudorandomometricsequencesapi/"
+          target: "${{ env.DEPLOY_ROOT }}/pseudorandomometricsequencesapi/"
 
       - name: Deploy and restart Docker container
         uses: appleboy/ssh-action@v1.0.0
@@ -79,7 +82,7 @@ jobs:
           script: |
             set -e
             
-            cd /opt/pseudorandomometricsequencesapi/
+            cd "${{ env.DEPLOY_ROOT }}/pseudorandomometricsequencesapi/"
             
             docker stop pseudorandom-api || true
             docker rm pseudorandom-api || true
